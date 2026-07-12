@@ -29,6 +29,15 @@ targets:
         SWIFT_VERSION: "5.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         GENERATE_INFOPLIST_FILE: NO
+      configs:
+        # Release is explicitly ad-hoc signed (identity "-", no team), rather
+        # than left to Automatic resolution — this makes the release build
+        # reproducible regardless of what signing certificates happen to be
+        # in whoever's keychain runs Scripts/build-dmg.sh.
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "-"
+          DEVELOPMENT_TEAM: ""
     dependencies:
       - package: MacbyKit
         product: MacbyCore
