@@ -41,6 +41,10 @@ let package = Package(
         .testTarget(
             name: "MacbyPersistenceTests",
             dependencies: ["MacbyPersistence"]
+        ),
+        .testTarget(
+            name: "MacbySystemTests",
+            dependencies: ["MacbySystem"]
         )
     ]
 )

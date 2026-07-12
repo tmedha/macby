@@ -22,6 +22,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var historyViewModel: HistoryViewModel!
     private var settingsCancellable: AnyCancellable?
 
+    private var bookmarkStore: SecurityScopedBookmarkStore!
+    private var fileSaveRouter: FileSaveRouter!
+    private var hotkeyManager: HotkeyManager!
+    private var snipCaptureService: SnipCaptureService!
+    private var popoverHotkeyToken: HotkeyManager.Token?
+    private var snipHotkeyToken: HotkeyManager.Token?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
             dbQueue = try Database.makeQueue(at: Database.defaultStoreURL)
@@ -37,6 +44,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         permissionsManager = PermissionsManager()
         historyViewModel = HistoryViewModel(historyStore: historyStore, dbQueue: dbQueue)
 
+        bookmarkStore = SecurityScopedBookmarkStore(settingsStore: settingsStore)
+        fileSaveRouter = FileSaveRouter(bookmarkStore: bookmarkStore)
+        hotkeyManager = HotkeyManager()
+        snipCaptureService = SnipCaptureService(
+            historyStore: historyStore,
+            blobStore: blobStore,
+            fileSaveRouter: fileSaveRouter,
+            permissionsManager: permissionsManager
+        )
+
         applySettings(settingsStore.settings)
         observeSettingsChanges()
 
@@ -46,10 +63,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setUpPopover()
 
         permissionsManager.requestAccessibilityIfNeeded()
+        hotkeyManager.start()
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActive),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         pasteboardMonitor.stop()
+        hotkeyManager.stop()
+    }
+
+    @objc private func applicationDidBecomeActive() {
+        // Retry starting the tap in case the user granted Accessibility in
+        // System Settings after launch and returned to Macby.
+        if !hotkeyManager.isRunning {
+            hotkeyManager.start()
+        }
     }
 
     // MARK: - Status item
@@ -87,7 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openSettings() {
         if settingsWindowController == nil {
-            let view = GeneralSettingsView(settingsStore: settingsStore, historyStore: historyStore)
+            let view = SettingsRootView(settingsStore: settingsStore, historyStore: historyStore, bookmarkStore: bookmarkStore)
             settingsWindowController = SettingsWindowController(rootView: view)
         }
         settingsWindowController?.show()
@@ -121,6 +155,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pasteboardMonitor.isPaused = settings.monitoringPaused
         pasteboardMonitor.excludedAppBundleIDs = Set(settings.excludedAppBundleIDs)
         historyStore.maxHistoryItemCount = settings.maxHistoryItemCount
+        applyHotkeys(settings)
+    }
+
+    private func applyHotkeys(_ settings: AppSettings) {
+        if let popoverHotkeyToken { hotkeyManager.unregister(popoverHotkeyToken) }
+        if let snipHotkeyToken { hotkeyManager.unregister(snipHotkeyToken) }
+        popoverHotkeyToken = nil
+        snipHotkeyToken = nil
+
+        if let combo = settings.popoverHotkey {
+            popoverHotkeyToken = hotkeyManager.register(combo) { [weak self] in
+                self?.popoverController?.toggle(relativeTo: self?.statusItem?.button)
+            }
+        }
+        if let combo = settings.snipCaptureHotkey {
+            snipHotkeyToken = hotkeyManager.register(combo) { [weak self] in
+                self?.snipCaptureService.startCapture()
+            }
+        }
     }
 
     private func observeSettingsChanges() {
