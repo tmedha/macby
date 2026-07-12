@@ -29,40 +29,73 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
         self.contentView = contentView
     }
 
+    /// Used for status item clicks — appears anchored to the icon, matching
+    /// conventional menu bar app behavior.
     func toggle(relativeTo statusItemButton: NSStatusBarButton?) {
-        if let panel, panel.isVisible {
-            hide()
-        } else {
-            show(relativeTo: statusItemButton)
+        togglePanel { panel in
+            Self.origin(relativeToStatusItem: statusItemButton, panelSize: panel.frame.size)
         }
     }
 
-    func show(relativeTo statusItemButton: NSStatusBarButton?) {
+    /// Used for the global keyboard shortcut — appears near the mouse cursor
+    /// rather than jumping to the menu bar corner, since a hotkey can be
+    /// triggered from anywhere on screen.
+    func toggleNearCursor() {
+        togglePanel { panel in
+            Self.originNearCursor(panelSize: panel.frame.size)
+        }
+    }
+
+    func hide() {
+        panel?.orderOut(nil)
+        removeOutsideClickMonitor()
+    }
+
+    private func togglePanel(origin: (NSPanel) -> NSPoint) {
+        if let panel, panel.isVisible {
+            hide()
+        } else {
+            show(origin: origin)
+        }
+    }
+
+    private func show(origin: (NSPanel) -> NSPoint) {
         onWillShow?()
         if NSWorkspace.shared.frontmostApplication?.bundleIdentifier != Bundle.main.bundleIdentifier {
             previouslyActiveApp = NSWorkspace.shared.frontmostApplication
         }
         let panel = makePanelIfNeeded()
-
-        if let button = statusItemButton, let buttonWindow = button.window {
-            let buttonFrame = buttonWindow.convertToScreen(button.frame)
-            let x = buttonFrame.midX - panel.frame.width / 2
-            let y = buttonFrame.minY - panel.frame.height - 4
-            panel.setFrameOrigin(NSPoint(x: x, y: y))
-        } else if let screen = NSScreen.main {
-            let x = screen.frame.midX - panel.frame.width / 2
-            let y = screen.frame.midY - panel.frame.height / 2
-            panel.setFrameOrigin(NSPoint(x: x, y: y))
-        }
+        panel.setFrameOrigin(origin(panel))
 
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
         installOutsideClickMonitor()
     }
 
-    func hide() {
-        panel?.orderOut(nil)
-        removeOutsideClickMonitor()
+    private static func origin(relativeToStatusItem button: NSStatusBarButton?, panelSize: NSSize) -> NSPoint {
+        guard let button, let buttonWindow = button.window else {
+            return originNearCursor(panelSize: panelSize)
+        }
+        let buttonFrame = buttonWindow.convertToScreen(button.frame)
+        let point = NSPoint(x: buttonFrame.midX - panelSize.width / 2, y: buttonFrame.minY - panelSize.height - 4)
+        return clampToScreen(point, panelSize: panelSize, near: NSPoint(x: buttonFrame.midX, y: buttonFrame.midY))
+    }
+
+    private static func originNearCursor(panelSize: NSSize) -> NSPoint {
+        let mouseLocation = NSEvent.mouseLocation
+        let point = NSPoint(x: mouseLocation.x - panelSize.width / 2, y: mouseLocation.y - panelSize.height - 12)
+        return clampToScreen(point, panelSize: panelSize, near: mouseLocation)
+    }
+
+    /// Keeps the panel fully on the screen the reference point (status item or
+    /// cursor) is actually on — without this, a hotkey pressed near a screen
+    /// edge could position the panel partly or fully off-screen.
+    private static func clampToScreen(_ point: NSPoint, panelSize: NSSize, near referencePoint: NSPoint) -> NSPoint {
+        let screen = NSScreen.screens.first { $0.frame.contains(referencePoint) } ?? NSScreen.main
+        guard let visibleFrame = screen?.visibleFrame else { return point }
+        let x = min(max(point.x, visibleFrame.minX), visibleFrame.maxX - panelSize.width)
+        let y = min(max(point.y, visibleFrame.minY), visibleFrame.maxY - panelSize.height)
+        return NSPoint(x: x, y: y)
     }
 
     private func makePanelIfNeeded() -> NSPanel {

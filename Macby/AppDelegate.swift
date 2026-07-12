@@ -266,7 +266,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let combo = settings.popoverHotkey {
             popoverHotkeyToken = hotkeyManager.register(combo) { [weak self] in
-                self?.popoverController?.toggle(relativeTo: self?.statusItem?.button)
+                self?.popoverController?.toggleNearCursor()
             }
         }
         if let combo = settings.snipCaptureHotkey {
