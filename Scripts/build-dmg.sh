@@ -34,6 +34,14 @@ echo "==> Cleaning previous build output"
 rm -rf "$RELEASE_DIR" "$DMG_STAGING_DIR" "$DMG_PATH"
 mkdir -p "$RELEASE_DIR" "$DMG_STAGING_DIR"
 
+# dmg-staging is purely a scratch copy used to lay out the DMG's contents —
+# it must not survive the script, or Spotlight/Launch Services will register
+# it as yet another "Macby" app distinct from the one in /Applications.
+cleanup_staging() {
+  rm -rf "$DMG_STAGING_DIR"
+}
+trap cleanup_staging EXIT
+
 echo "==> Compiling Release build"
 xcodebuild \
   -project Macby.xcodeproj \

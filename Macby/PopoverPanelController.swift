@@ -10,6 +10,13 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
     private var outsideClickMonitor: Any?
     let contentView: () -> PopoverRootView
+    /// Called every time the panel is about to be shown — not just the first
+    /// time. The panel/hosting view is created once and reused (shown via
+    /// orderFront/orderOut, not recreated), so SwiftUI's `.onAppear` inside
+    /// `contentView` only ever fires once for the process's lifetime. Anything
+    /// that needs to be current on every open (e.g. re-checking Accessibility
+    /// trust, which can change while the popover is closed) has to go here.
+    var onWillShow: (() -> Void)?
 
     init(contentView: @escaping () -> PopoverRootView) {
         self.contentView = contentView
@@ -24,6 +31,7 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
     }
 
     func show(relativeTo statusItemButton: NSStatusBarButton?) {
+        onWillShow?()
         let panel = makePanelIfNeeded()
 
         if let button = statusItemButton, let buttonWindow = button.window {

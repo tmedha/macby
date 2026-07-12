@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import MacbyCore
 
@@ -8,9 +9,8 @@ struct ClipboardItemRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            icon
+            leadingThumbnail
                 .frame(width: 20, height: 20)
-                .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -83,6 +83,21 @@ struct ClipboardItemRow: View {
         .padding(.horizontal, 5)
         .padding(.vertical, 2)
         .background(Capsule().fill(Color.red.opacity(0.15)))
+    }
+
+    @ViewBuilder
+    private var leadingThumbnail: some View {
+        if item.contentType == .image,
+           let path = item.imageThumbnailPath,
+           let nsImage = NSImage(contentsOfFile: path) {
+            Image(nsImage: nsImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 20, height: 20)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+        } else {
+            icon.foregroundStyle(.secondary)
+        }
     }
 
     private var icon: Image {

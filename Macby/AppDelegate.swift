@@ -198,7 +198,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setUpPopover() {
         let viewModel = historyViewModel!
         let permissionsManager = permissionsManager!
-        popoverController = PopoverPanelController { [weak self] in
+        let controller = PopoverPanelController { [weak self] in
             PopoverRootView(
                 viewModel: viewModel,
                 permissionsManager: permissionsManager,
@@ -207,6 +207,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 onOpenAccessibilitySettings: { [weak self] in self?.permissionsManager.openAccessibilitySettings() }
             )
         }
+        controller.onWillShow = { [weak self] in
+            self?.permissionsManager.refresh()
+        }
+        popoverController = controller
     }
 
     private func paste(_ item: ClipboardItem) {
