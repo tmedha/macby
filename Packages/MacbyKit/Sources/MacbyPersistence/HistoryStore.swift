@@ -21,6 +21,13 @@ public final class HistoryStore: @unchecked Sendable {
                 .fetchOne(db)
             {
                 existing.createdAt = item.createdAt
+                // A re-copied identical OTP (e.g. a resent code) should become
+                // eligible for auto-clear again rather than staying marked as
+                // already-cleared from its prior appearance.
+                if item.sensitivityKind == .otp {
+                    existing.sensitivityKind = SensitivityKind.otp.rawValue
+                    existing.otpCleared = false
+                }
                 try existing.update(db)
                 try self.pruneIfNeeded(db)
                 return existing.asDomainItem()
@@ -68,6 +75,29 @@ public final class HistoryStore: @unchecked Sendable {
                 """,
                 arguments: [pattern, limit]
             ).map { $0.asDomainItem() }
+        }
+    }
+
+    /// The most recent OTP-flagged item that hasn't yet been auto-cleared.
+    /// Used by `OTPAutoClearService` to decide whether a detected paste (or an
+    /// elapsed timeout) still applies to what's currently on the pasteboard.
+    public func mostRecentUnclearedOTPItem() throws -> ClipboardItem? {
+        try dbQueue.read { db in
+            try ClipboardItemRecord
+                .filter(Column("sensitivityKind") == SensitivityKind.otp.rawValue)
+                .filter(Column("otpCleared") == false)
+                .order(Column("createdAt").desc)
+                .fetchOne(db)?
+                .asDomainItem()
+        }
+    }
+
+    public func markOTPCleared(uuid: String) throws {
+        try dbQueue.write { db in
+            if var record = try ClipboardItemRecord.filter(Column("uuid") == uuid).fetchOne(db) {
+                record.otpCleared = true
+                try record.update(db)
+            }
         }
     }
 

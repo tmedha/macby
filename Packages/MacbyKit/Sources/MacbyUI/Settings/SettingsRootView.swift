@@ -23,6 +23,9 @@ public struct SettingsRootView: View {
 
             FolderRoutingSettingsView(bookmarkStore: bookmarkStore)
                 .tabItem { Label("Folders", systemImage: "folder") }
+
+            OTPSettingsView(settingsStore: settingsStore)
+                .tabItem { Label("OTP", systemImage: "key") }
         }
         .frame(width: 420, height: 360)
     }

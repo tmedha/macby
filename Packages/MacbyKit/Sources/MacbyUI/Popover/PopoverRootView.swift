@@ -45,21 +45,30 @@ public struct PopoverRootView: View {
         .onKeyPress(.escape) { onClose(); return .handled }
     }
 
+    // Non-file items (text/image/rtf/url) render first, reverse-chronological;
+    // file items render below a visually heavier divider. Both groups share one
+    // selection index space (nonFileItems, then fileItems) so arrow-key
+    // navigation flows continuously from one section into the other.
+    private var nonFileItems: [ClipboardItem] { viewModel.items.filter { !$0.isFile } }
+    private var fileItems: [ClipboardItem] { viewModel.items.filter { $0.isFile } }
+
     private var list: some View {
         ScrollView {
-            LazyVStack(spacing: 2) {
-                ForEach(Array(viewModel.items.enumerated()), id: \.element.uuid) { index, item in
-                    ClipboardItemRow(
-                        item: item,
-                        isSelected: index == selectedIndex,
-                        onSelect: {
-                            selectedIndex = index
-                            onPaste(item)
-                        }
-                    )
-                    .contextMenu {
-                        Button(item.isPinned ? "Unpin" : "Pin") { viewModel.togglePin(item) }
-                        Button("Delete", role: .destructive) { viewModel.delete(item) }
+            LazyVStack(alignment: .leading, spacing: 2) {
+                ForEach(Array(nonFileItems.enumerated()), id: \.element.uuid) { index, item in
+                    row(item: item, index: index)
+                }
+
+                if !fileItems.isEmpty {
+                    SectionDivider()
+                    Text("Files")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.top, 4)
+
+                    ForEach(Array(fileItems.enumerated()), id: \.element.uuid) { offset, item in
+                        row(item: item, index: nonFileItems.count + offset)
                     }
                 }
             }
@@ -67,13 +76,39 @@ public struct PopoverRootView: View {
         }
     }
 
+    private func row(item: ClipboardItem, index: Int) -> some View {
+        ClipboardItemRow(
+            item: item,
+            isSelected: index == selectedIndex,
+            onSelect: {
+                selectedIndex = index
+                onPaste(item)
+            }
+        )
+        .contextMenu {
+            Button(item.isPinned ? "Unpin" : "Pin") { viewModel.togglePin(item) }
+            Button("Delete", role: .destructive) { viewModel.delete(item) }
+        }
+    }
+
     private func move(_ delta: Int) {
-        guard !viewModel.items.isEmpty else { return }
-        selectedIndex = max(0, min(viewModel.items.count - 1, selectedIndex + delta))
+        let count = nonFileItems.count + fileItems.count
+        guard count > 0 else { return }
+        selectedIndex = max(0, min(count - 1, selectedIndex + delta))
     }
 
     private func selectCurrent() {
-        guard viewModel.items.indices.contains(selectedIndex) else { return }
-        onPaste(viewModel.items[selectedIndex])
+        let combined = nonFileItems + fileItems
+        guard combined.indices.contains(selectedIndex) else { return }
+        onPaste(combined[selectedIndex])
+    }
+}
+
+private struct SectionDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.25))
+            .frame(height: 1.5)
+            .padding(.vertical, 6)
     }
 }

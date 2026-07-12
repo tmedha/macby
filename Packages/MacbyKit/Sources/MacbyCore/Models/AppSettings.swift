@@ -11,6 +11,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var popoverHotkey: KeyCombo?
     public var snipCaptureHotkey: KeyCombo?
     public var snipFolderBookmarks: [String: Data]
+    public var otpDetectionEnabled: Bool
+    public var otpClearTrigger: OTPClearTrigger
+    public var otpClearTimeoutSeconds: Int
 
     public static let `default` = AppSettings(
         maxHistoryItemCount: 500,
@@ -20,7 +23,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         excludedAppBundleIDs: [],
         popoverHotkey: .defaultPopoverHotkey,
         snipCaptureHotkey: nil,
-        snipFolderBookmarks: [:]
+        snipFolderBookmarks: [:],
+        otpDetectionEnabled: true,
+        otpClearTrigger: .both,
+        otpClearTimeoutSeconds: 30
     )
 
     public init(
@@ -31,7 +37,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         excludedAppBundleIDs: [String],
         popoverHotkey: KeyCombo?,
         snipCaptureHotkey: KeyCombo?,
-        snipFolderBookmarks: [String: Data]
+        snipFolderBookmarks: [String: Data],
+        otpDetectionEnabled: Bool,
+        otpClearTrigger: OTPClearTrigger,
+        otpClearTimeoutSeconds: Int
     ) {
         self.maxHistoryItemCount = maxHistoryItemCount
         self.launchAtLogin = launchAtLogin
@@ -41,6 +50,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.popoverHotkey = popoverHotkey
         self.snipCaptureHotkey = snipCaptureHotkey
         self.snipFolderBookmarks = snipFolderBookmarks
+        self.otpDetectionEnabled = otpDetectionEnabled
+        self.otpClearTrigger = otpClearTrigger
+        self.otpClearTimeoutSeconds = otpClearTimeoutSeconds
     }
 
     // Custom Decodable so that adding new fields in the future never breaks
@@ -59,5 +71,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         popoverHotkey = try container.decodeIfPresent(KeyCombo.self, forKey: .popoverHotkey) ?? defaults.popoverHotkey
         snipCaptureHotkey = try container.decodeIfPresent(KeyCombo.self, forKey: .snipCaptureHotkey) ?? defaults.snipCaptureHotkey
         snipFolderBookmarks = try container.decodeIfPresent([String: Data].self, forKey: .snipFolderBookmarks) ?? defaults.snipFolderBookmarks
+        otpDetectionEnabled = try container.decodeIfPresent(Bool.self, forKey: .otpDetectionEnabled) ?? defaults.otpDetectionEnabled
+        otpClearTrigger = try container.decodeIfPresent(OTPClearTrigger.self, forKey: .otpClearTrigger) ?? defaults.otpClearTrigger
+        otpClearTimeoutSeconds = try container.decodeIfPresent(Int.self, forKey: .otpClearTimeoutSeconds) ?? defaults.otpClearTimeoutSeconds
     }
 }

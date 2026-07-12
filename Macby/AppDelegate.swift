@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var fileSaveRouter: FileSaveRouter!
     private var hotkeyManager: HotkeyManager!
     private var snipCaptureService: SnipCaptureService!
+    private var otpAutoClearService: OTPAutoClearService!
     private var popoverHotkeyToken: HotkeyManager.Token?
     private var snipHotkeyToken: HotkeyManager.Token?
 
@@ -53,6 +54,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             fileSaveRouter: fileSaveRouter,
             permissionsManager: permissionsManager
         )
+        otpAutoClearService = OTPAutoClearService(historyStore: historyStore, hotkeyManager: hotkeyManager)
+        pasteboardMonitor.onCapture = { [weak self] item in
+            self?.otpAutoClearService.handleCapturedItem(item)
+        }
 
         applySettings(settingsStore.settings)
         observeSettingsChanges()
@@ -154,8 +159,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func applySettings(_ settings: AppSettings) {
         pasteboardMonitor.isPaused = settings.monitoringPaused
         pasteboardMonitor.excludedAppBundleIDs = Set(settings.excludedAppBundleIDs)
+        pasteboardMonitor.otpDetectionEnabled = settings.otpDetectionEnabled
         historyStore.maxHistoryItemCount = settings.maxHistoryItemCount
         applyHotkeys(settings)
+        otpAutoClearService.updateSettings(
+            enabled: settings.otpDetectionEnabled,
+            trigger: settings.otpClearTrigger,
+            timeoutSeconds: settings.otpClearTimeoutSeconds
+        )
     }
 
     private func applyHotkeys(_ settings: AppSettings) {

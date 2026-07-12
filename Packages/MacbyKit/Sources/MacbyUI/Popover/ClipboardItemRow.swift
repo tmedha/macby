@@ -25,6 +25,10 @@ struct ClipboardItemRow: View {
 
             Spacer()
 
+            if item.sensitivityKind == .otp {
+                otpBadge
+            }
+
             if item.isPinned {
                 Image(systemName: "pin.fill")
                     .font(.system(size: 10))
@@ -49,6 +53,20 @@ struct ClipboardItemRow: View {
             let names = (item.fileURLs ?? []).map { URL(fileURLWithPath: $0).lastPathComponent }
             return names.joined(separator: ", ")
         }
+    }
+
+    private var otpBadge: some View {
+        HStack(spacing: 3) {
+            Image(systemName: item.otpCleared ? "checkmark.circle" : "key.fill")
+            Text(item.otpCleared ? "Cleared" : "OTP")
+        }
+        .font(.system(size: 9, weight: .medium))
+        .foregroundStyle(item.otpCleared ? Color.secondary : Color.orange)
+        .padding(.horizontal, 5)
+        .padding(.vertical, 2)
+        .background(
+            Capsule().fill((item.otpCleared ? Color.gray : Color.orange).opacity(0.15))
+        )
     }
 
     private var icon: Image {

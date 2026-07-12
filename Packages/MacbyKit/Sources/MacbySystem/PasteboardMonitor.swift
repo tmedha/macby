@@ -12,6 +12,11 @@ public final class PasteboardMonitor {
     public var pollInterval: TimeInterval
     public var isPaused: Bool = false
     public var excludedAppBundleIDs: Set<String> = []
+    public var otpDetectionEnabled: Bool = true
+    /// Fired after every successful capture, on the main actor. Used by
+    /// `OTPAutoClearService` to react to freshly captured OTP items without
+    /// PasteboardMonitor needing to know that service exists.
+    public var onCapture: ((ClipboardItem) -> Void)?
 
     private let pasteboard = NSPasteboard.general
     private let historyStore: HistoryStore
@@ -52,7 +57,8 @@ public final class PasteboardMonitor {
 
         guard let item = buildItem(sourceApp: frontmost) else { return }
         do {
-            try historyStore.capture(item)
+            let captured = try historyStore.capture(item)
+            onCapture?(captured)
         } catch {
             NSLog("PasteboardMonitor: failed to capture clipboard item: \(error)")
         }
@@ -104,6 +110,7 @@ public final class PasteboardMonitor {
                 preview = String(text.prefix(BlobStore.textInlineThreshold))
                 fullTextPath = try? blobStore.writeText(text, uuid: uuid).path
             }
+            let isOTP = otpDetectionEnabled && OTPDetector.isLikelyOTP(text)
             return ClipboardItem(
                 uuid: uuid,
                 contentType: isRTF ? .rtf : .text,
@@ -111,7 +118,8 @@ public final class PasteboardMonitor {
                 fullTextPath: fullTextPath,
                 contentHash: hash,
                 sourceAppBundleID: sourceBundleID,
-                sourceAppName: sourceName
+                sourceAppName: sourceName,
+                sensitivityKind: isOTP ? .otp : nil
             )
         }
 
