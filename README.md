@@ -24,26 +24,6 @@ cd Packages/MacbyKit
 swift test
 ```
 
-## Releasing (.dmg)
-
-Requires [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) for a proper drag-to-Applications layout — the script falls back to a plain `hdiutil` image without it.
-
-```sh
-./Scripts/build-dmg.sh
-```
-
-This regenerates the Xcode project, builds a Release configuration, ad-hoc signs it (fixed in `project.yml` via `CODE_SIGN_IDENTITY: "-"`, so the result doesn't depend on whatever's in your keychain), and writes `build/Macby-<version>.dmg`. Bump `MARKETING_VERSION` in `project.yml` before releasing a new version — the script names the `.dmg` after it.
-
-Ad-hoc signing means anyone who downloads it hits Gatekeeper's "Apple could not verify..." warning on first launch and has to right-click the app → Open once to get past it. That's the tradeoff for not paying for a Developer ID certificate.
-
-To publish it on GitHub:
-
-```sh
-gh release create v0.1.0 build/Macby-0.1.0.dmg --title "Macby 0.1.0" --notes "..."
-```
-
-or upload the `.dmg` as a release asset via the GitHub web UI. The git tag is independent of `MARKETING_VERSION` — keep them in sync by convention, not enforcement.
-
 ## Cleaning
 
 Remove all generated/build artifacts (generated Xcode project, SPM build products, DerivedData):
@@ -65,11 +45,11 @@ Also quit any running Macby instance first (`pkill -f Macby.app/Contents/MacOS/M
 
 ### Multiple "Macby" apps showing up in Spotlight/Launchpad
 
-Every `.app` bundle on disk gets registered by Launch Services and shows up in Spotlight/Launchpad, not just the one in `/Applications` — a Debug build in DerivedData, `build/Release/Macby.app`, etc. all count as separate entries even though they're all "Macby." `Scripts/build-dmg.sh` cleans up its own scratch copy automatically, but if you end up with duplicates from manual testing, delete the extra `.app` copies (the `rm -rf` commands above) and Launch Services will drop them on its own, or force it immediately:
+Every `.app` bundle on disk gets registered by Launch Services and shows up in Spotlight/Launchpad, not just the copy you actually run — a Debug build in DerivedData, an old copy in `/Applications`, etc. all count as separate entries even though they're all "Macby." Delete whichever copies you're not using (the `rm -rf` commands above) and Launch Services will drop them on its own, or force it immediately:
 
 ```sh
 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -f /Applications/Macby.app
 ```
 
-`/Applications/Macby.app` is always the one to keep. Everything else under this repo or DerivedData is a build artifact.
+Rebuilding changes the code signature every time (debug builds are ad-hoc signed), which invalidates any previously granted Accessibility permission — after rebuilding, re-grant it under System Settings → Privacy & Security → Accessibility rather than assuming a stale grant still applies.
 
