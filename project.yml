@@ -1,0 +1,40 @@
+name: Macby
+options:
+  bundleIdPrefix: com.macby
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+packages:
+  MacbyKit:
+    path: Packages/MacbyKit
+
+targets:
+  Macby:
+    type: application
+    platform: macOS
+    sources:
+      - path: Macby
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.macby.app
+        PRODUCT_NAME: Macby
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_FILE: Macby/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Macby/Macby.entitlements
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - package: MacbyKit
+        product: MacbyCore
+      - package: MacbyKit
+        product: MacbyPersistence
+      - package: MacbyKit
+        product: MacbySystem
+      - package: MacbyKit
+        product: MacbyUI

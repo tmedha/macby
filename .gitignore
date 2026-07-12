@@ -1,0 +1,12 @@
+# Xcode project is generated from project.yml via `xcodegen generate`
+Macby.xcodeproj/
+
+# Build artifacts
+.build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# macOS
+.DS_Store
