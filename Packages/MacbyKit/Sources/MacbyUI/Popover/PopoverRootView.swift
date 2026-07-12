@@ -1,34 +1,62 @@
 import SwiftUI
 import MacbyCore
+import MacbySystem
 
 public struct PopoverRootView: View {
     @ObservedObject var viewModel: HistoryViewModel
+    @ObservedObject var permissionsManager: PermissionsManager
     let onPaste: (ClipboardItem) -> Void
     let onClose: () -> Void
+    let onOpenAccessibilitySettings: () -> Void
 
     @State private var selectedIndex = 0
     @FocusState private var searchFocused: Bool
 
     public init(
         viewModel: HistoryViewModel,
+        permissionsManager: PermissionsManager,
         onPaste: @escaping (ClipboardItem) -> Void,
-        onClose: @escaping () -> Void
+        onClose: @escaping () -> Void,
+        onOpenAccessibilitySettings: @escaping () -> Void
     ) {
         self.viewModel = viewModel
+        self.permissionsManager = permissionsManager
         self.onPaste = onPaste
         self.onClose = onClose
+        self.onOpenAccessibilitySettings = onOpenAccessibilitySettings
     }
 
     public var body: some View {
         VStack(spacing: 0) {
+            if !permissionsManager.isAccessibilityTrusted {
+                permissionBanner
+                Divider()
+            }
             searchField
             Divider()
             list
         }
         .frame(width: 360, height: 420)
         .background(.regularMaterial)
-        .onAppear { searchFocused = true }
+        .onAppear {
+            searchFocused = true
+            permissionsManager.refresh()
+        }
         .onChange(of: viewModel.items) { _, _ in selectedIndex = 0 }
+    }
+
+    private var permissionBanner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.yellow)
+            Text("Accessibility access needed for shortcuts & paste")
+                .font(.system(size: 11))
+            Spacer()
+            Button("Fix\u{2026}", action: onOpenAccessibilitySettings)
+                .font(.system(size: 11))
+        }
+        .padding(8)
+        .background(Color.yellow.opacity(0.15))
     }
 
     private var searchField: some View {

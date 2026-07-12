@@ -3,10 +3,10 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    convenience init<Content: View>(rootView: Content) {
+    convenience init<Content: View>(rootView: Content, title: String = "Macby Settings") {
         let hosting = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hosting)
-        window.title = "Macby Settings"
+        window.title = title
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         self.init(window: window)

@@ -29,6 +29,10 @@ struct ClipboardItemRow: View {
                 otpBadge
             }
 
+            if item.isSensitive {
+                sensitiveBadge
+            }
+
             if item.isPinned {
                 Image(systemName: "pin.fill")
                     .font(.system(size: 10))
@@ -67,6 +71,18 @@ struct ClipboardItemRow: View {
         .background(
             Capsule().fill((item.otpCleared ? Color.gray : Color.orange).opacity(0.15))
         )
+    }
+
+    private var sensitiveBadge: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "lock.fill")
+            Text(item.sensitivityKind == .ssn ? "SSN" : "Card")
+        }
+        .font(.system(size: 9, weight: .medium))
+        .foregroundStyle(Color.red)
+        .padding(.horizontal, 5)
+        .padding(.vertical, 2)
+        .background(Capsule().fill(Color.red.opacity(0.15)))
     }
 
     private var icon: Image {

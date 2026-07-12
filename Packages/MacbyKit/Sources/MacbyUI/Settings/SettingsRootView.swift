@@ -26,6 +26,12 @@ public struct SettingsRootView: View {
 
             OTPSettingsView(settingsStore: settingsStore)
                 .tabItem { Label("OTP", systemImage: "key") }
+
+            PrivacySettingsView(settingsStore: settingsStore)
+                .tabItem { Label("Privacy", systemImage: "lock.shield") }
+
+            ExcludedAppsSettingsView(settingsStore: settingsStore)
+                .tabItem { Label("Excluded Apps", systemImage: "nosign") }
         }
         .frame(width: 420, height: 360)
     }

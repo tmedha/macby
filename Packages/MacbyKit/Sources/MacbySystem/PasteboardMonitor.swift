@@ -13,6 +13,8 @@ public final class PasteboardMonitor {
     public var isPaused: Bool = false
     public var excludedAppBundleIDs: Set<String> = []
     public var otpDetectionEnabled: Bool = true
+    public var sensitiveDetectionEnabled: Bool = true
+    public var aggressiveSSNDetectionEnabled: Bool = false
     /// Fired after every successful capture, on the main actor. Used by
     /// `OTPAutoClearService` to react to freshly captured OTP items without
     /// PasteboardMonitor needing to know that service exists.
@@ -111,6 +113,14 @@ public final class PasteboardMonitor {
                 fullTextPath = try? blobStore.writeText(text, uuid: uuid).path
             }
             let isOTP = otpDetectionEnabled && OTPDetector.isLikelyOTP(text)
+            var sensitivityKind: SensitivityKind?
+            if isOTP {
+                sensitivityKind = .otp
+            } else if sensitiveDetectionEnabled {
+                sensitivityKind = SensitiveContentDetector.detect(text, aggressiveSSNDetection: aggressiveSSNDetectionEnabled)
+            }
+            let isSensitive = sensitivityKind == .creditCard || sensitivityKind == .ssn
+
             return ClipboardItem(
                 uuid: uuid,
                 contentType: isRTF ? .rtf : .text,
@@ -119,7 +129,8 @@ public final class PasteboardMonitor {
                 contentHash: hash,
                 sourceAppBundleID: sourceBundleID,
                 sourceAppName: sourceName,
-                sensitivityKind: isOTP ? .otp : nil
+                isSensitive: isSensitive,
+                sensitivityKind: sensitivityKind
             )
         }
 

@@ -14,6 +14,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var otpDetectionEnabled: Bool
     public var otpClearTrigger: OTPClearTrigger
     public var otpClearTimeoutSeconds: Int
+    public var sensitiveDetectionEnabled: Bool
+    public var aggressiveSSNDetectionEnabled: Bool
+    public var requireBiometricForSensitivePaste: Bool
 
     public static let `default` = AppSettings(
         maxHistoryItemCount: 500,
@@ -26,7 +29,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         snipFolderBookmarks: [:],
         otpDetectionEnabled: true,
         otpClearTrigger: .both,
-        otpClearTimeoutSeconds: 30
+        otpClearTimeoutSeconds: 30,
+        sensitiveDetectionEnabled: true,
+        aggressiveSSNDetectionEnabled: false,
+        requireBiometricForSensitivePaste: true
     )
 
     public init(
@@ -40,7 +46,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         snipFolderBookmarks: [String: Data],
         otpDetectionEnabled: Bool,
         otpClearTrigger: OTPClearTrigger,
-        otpClearTimeoutSeconds: Int
+        otpClearTimeoutSeconds: Int,
+        sensitiveDetectionEnabled: Bool,
+        aggressiveSSNDetectionEnabled: Bool,
+        requireBiometricForSensitivePaste: Bool
     ) {
         self.maxHistoryItemCount = maxHistoryItemCount
         self.launchAtLogin = launchAtLogin
@@ -53,6 +62,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.otpDetectionEnabled = otpDetectionEnabled
         self.otpClearTrigger = otpClearTrigger
         self.otpClearTimeoutSeconds = otpClearTimeoutSeconds
+        self.sensitiveDetectionEnabled = sensitiveDetectionEnabled
+        self.aggressiveSSNDetectionEnabled = aggressiveSSNDetectionEnabled
+        self.requireBiometricForSensitivePaste = requireBiometricForSensitivePaste
     }
 
     // Custom Decodable so that adding new fields in the future never breaks
@@ -74,5 +86,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         otpDetectionEnabled = try container.decodeIfPresent(Bool.self, forKey: .otpDetectionEnabled) ?? defaults.otpDetectionEnabled
         otpClearTrigger = try container.decodeIfPresent(OTPClearTrigger.self, forKey: .otpClearTrigger) ?? defaults.otpClearTrigger
         otpClearTimeoutSeconds = try container.decodeIfPresent(Int.self, forKey: .otpClearTimeoutSeconds) ?? defaults.otpClearTimeoutSeconds
+        sensitiveDetectionEnabled = try container.decodeIfPresent(Bool.self, forKey: .sensitiveDetectionEnabled) ?? defaults.sensitiveDetectionEnabled
+        aggressiveSSNDetectionEnabled = try container.decodeIfPresent(Bool.self, forKey: .aggressiveSSNDetectionEnabled) ?? defaults.aggressiveSSNDetectionEnabled
+        requireBiometricForSensitivePaste = try container.decodeIfPresent(Bool.self, forKey: .requireBiometricForSensitivePaste) ?? defaults.requireBiometricForSensitivePaste
     }
 }
