@@ -45,8 +45,7 @@ struct ClipboardItemRow: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .selectionBackground(isSelected: isSelected)
         .contentShape(Rectangle())
         .onTapGesture(perform: onSelect)
     }
@@ -121,6 +120,27 @@ struct ClipboardItemRow: View {
         case .text, .rtf, .url: Image(systemName: "doc.text")
         case .image: Image(systemName: "photo")
         case .fileList: Image(systemName: "doc")
+        }
+    }
+}
+
+private extension View {
+    /// Real Liquid Glass only for the selected row, on macOS 26+ — not every
+    /// row, which would be both visually noisy (glass-on-glass) and needlessly
+    /// expensive to render for a potentially long list. Older systems keep the
+    /// original flat tinted highlight.
+    @ViewBuilder
+    func selectionBackground(isSelected: Bool) -> some View {
+        if #available(macOS 26.0, *) {
+            if isSelected {
+                self.glassEffect(.regular.tint(.accentColor).interactive(), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            } else {
+                self.clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+        } else {
+            self
+                .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
         }
     }
 }

@@ -115,6 +115,12 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isReleasedWhenClosed = false
+        // Required for SwiftUI's glassEffect() to actually composite as glass
+        // (sampling/refracting what's behind the window) rather than sitting
+        // on an opaque backing — harmless on pre-macOS 26 systems where the
+        // content view falls back to .regularMaterial instead.
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
         panel.contentView = hosting
         panel.delegate = self
 
