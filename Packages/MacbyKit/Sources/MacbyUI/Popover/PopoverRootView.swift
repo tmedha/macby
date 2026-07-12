@@ -5,6 +5,7 @@ import MacbySystem
 public struct PopoverRootView: View {
     @ObservedObject var viewModel: HistoryViewModel
     @ObservedObject var permissionsManager: PermissionsManager
+    @ObservedObject var presentationState: PopoverPresentationState
     let onPaste: (ClipboardItem) -> Void
     let onClose: () -> Void
     let onOpenAccessibilitySettings: () -> Void
@@ -15,12 +16,14 @@ public struct PopoverRootView: View {
     public init(
         viewModel: HistoryViewModel,
         permissionsManager: PermissionsManager,
+        presentationState: PopoverPresentationState,
         onPaste: @escaping (ClipboardItem) -> Void,
         onClose: @escaping () -> Void,
         onOpenAccessibilitySettings: @escaping () -> Void
     ) {
         self.viewModel = viewModel
         self.permissionsManager = permissionsManager
+        self.presentationState = presentationState
         self.onPaste = onPaste
         self.onClose = onClose
         self.onOpenAccessibilitySettings = onOpenAccessibilitySettings
@@ -41,6 +44,13 @@ public struct PopoverRootView: View {
         .onAppear {
             searchFocused = true
             permissionsManager.refresh()
+        }
+        // .onAppear above only fires once ever (the panel is created once and
+        // reused via orderFront/orderOut on later opens) — this is what makes
+        // refocusing actually work on every subsequent open, which is what
+        // arrow-key navigation depends on without first clicking the field.
+        .onChange(of: presentationState.showCount) { _, _ in
+            searchFocused = true
         }
         .onChange(of: viewModel.items) { _, _ in selectedIndex = 0 }
     }

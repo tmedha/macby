@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pasteboardMonitor: PasteboardMonitor!
     private var pasteSimulator: PasteSimulator!
     private var permissionsManager: PermissionsManager!
+    private var popoverPresentationState: PopoverPresentationState!
     private var historyViewModel: HistoryViewModel!
     private var settingsCancellable: AnyCancellable?
 
@@ -45,6 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pasteboardMonitor = PasteboardMonitor(historyStore: historyStore, blobStore: blobStore)
         pasteSimulator = PasteSimulator(blobStore: blobStore)
         permissionsManager = PermissionsManager()
+        popoverPresentationState = PopoverPresentationState()
         historyViewModel = HistoryViewModel(historyStore: historyStore, dbQueue: dbQueue)
 
         bookmarkStore = SecurityScopedBookmarkStore(settingsStore: settingsStore)
@@ -198,10 +200,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setUpPopover() {
         let viewModel = historyViewModel!
         let permissionsManager = permissionsManager!
+        let presentationState = popoverPresentationState!
         let controller = PopoverPanelController { [weak self] in
             PopoverRootView(
                 viewModel: viewModel,
                 permissionsManager: permissionsManager,
+                presentationState: presentationState,
                 onPaste: { [weak self] item in self?.paste(item) },
                 onClose: { [weak self] in self?.popoverController?.hide() },
                 onOpenAccessibilitySettings: { [weak self] in self?.permissionsManager.openAccessibilitySettings() }
@@ -209,6 +213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         controller.onWillShow = { [weak self] in
             self?.permissionsManager.refresh()
+            self?.popoverPresentationState.notifyWillShow()
         }
         popoverController = controller
     }
