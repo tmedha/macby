@@ -37,6 +37,5 @@ public struct PrivacySettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 360)
     }
 }

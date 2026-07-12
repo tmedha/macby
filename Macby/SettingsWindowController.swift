@@ -7,7 +7,7 @@ final class SettingsWindowController: NSWindowController {
         let hosting = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hosting)
         window.title = title
-        window.styleMask = [.titled, .closable]
+        window.styleMask = [.titled, .closable, .resizable]
         window.isReleasedWhenClosed = false
         self.init(window: window)
     }

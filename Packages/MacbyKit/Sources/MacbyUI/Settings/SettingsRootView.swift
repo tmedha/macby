@@ -33,6 +33,6 @@ public struct SettingsRootView: View {
             ExcludedAppsSettingsView(settingsStore: settingsStore)
                 .tabItem { Label("Excluded Apps", systemImage: "nosign") }
         }
-        .frame(width: 420, height: 360)
+        .frame(minWidth: 480, idealWidth: 560, minHeight: 420, idealHeight: 480)
     }
 }

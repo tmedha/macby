@@ -15,9 +15,33 @@ public final class PasteSimulator {
         self.blobStore = blobStore
     }
 
-    public func paste(_ item: ClipboardItem, asPlainText: Bool = false) {
+    /// `targetApp` is whichever app was frontmost before Macby's popover
+    /// activated itself — it must be reactivated before the synthetic Cmd+V
+    /// is posted, or the keystroke has no meaningful target to land in (Macby
+    /// itself has no visible window once the popover is hidden). Activation
+    /// is asynchronous, so this briefly waits for it to actually take effect.
+    public func paste(_ item: ClipboardItem, asPlainText: Bool = false, targetApp: NSRunningApplication?) async {
         write(item, asPlainText: asPlainText)
+
+        if let targetApp, !targetApp.isActive {
+            targetApp.activate()
+            await waitUntilActive(targetApp, timeoutNanoseconds: 500_000_000)
+        }
+
         synthesizeCommandV()
+    }
+
+    /// Polls rather than sleeping a fixed duration — activation time varies
+    /// (e.g. an app waking from a suspended state takes longer), and a fixed
+    /// delay would either race ahead of slow activations or needlessly delay
+    /// fast ones. Proceeds anyway on timeout rather than never pasting.
+    private func waitUntilActive(_ app: NSRunningApplication, timeoutNanoseconds: UInt64) async {
+        let pollInterval: UInt64 = 20_000_000
+        var waited: UInt64 = 0
+        while !app.isActive && waited < timeoutNanoseconds {
+            try? await Task.sleep(nanoseconds: pollInterval)
+            waited += pollInterval
+        }
     }
 
     public func write(_ item: ClipboardItem, asPlainText: Bool = false) {

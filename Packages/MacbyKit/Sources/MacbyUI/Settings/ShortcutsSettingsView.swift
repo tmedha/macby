@@ -24,6 +24,5 @@ public struct ShortcutsSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 320)
     }
 }

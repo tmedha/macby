@@ -10,6 +10,13 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
     private var outsideClickMonitor: Any?
     let contentView: () -> PopoverRootView
+    /// Whatever app was frontmost right before Macby activated itself to show
+    /// the popover — captured here since `NSApp.activate` below makes Macby
+    /// the active app, and merely hiding the panel afterward does not restore
+    /// whichever app the user was actually in. Pasting needs to reactivate
+    /// this app before synthesizing Cmd+V, or the keystroke has nowhere
+    /// meaningful to land.
+    private(set) var previouslyActiveApp: NSRunningApplication?
     /// Called every time the panel is about to be shown — not just the first
     /// time. The panel/hosting view is created once and reused (shown via
     /// orderFront/orderOut, not recreated), so SwiftUI's `.onAppear` inside
@@ -32,6 +39,9 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
 
     func show(relativeTo statusItemButton: NSStatusBarButton?) {
         onWillShow?()
+        if NSWorkspace.shared.frontmostApplication?.bundleIdentifier != Bundle.main.bundleIdentifier {
+            previouslyActiveApp = NSWorkspace.shared.frontmostApplication
+        }
         let panel = makePanelIfNeeded()
 
         if let button = statusItemButton, let buttonWindow = button.window {

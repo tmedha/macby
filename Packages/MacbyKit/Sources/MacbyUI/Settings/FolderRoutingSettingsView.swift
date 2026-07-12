@@ -36,7 +36,6 @@ public struct FolderRoutingSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 320)
         .onAppear { snipsPath = bookmarkStore.displayPath(for: .snips) }
     }
 

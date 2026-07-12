@@ -214,9 +214,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func paste(_ item: ClipboardItem) {
+        let targetApp = popoverController?.previouslyActiveApp
+
         guard item.isSensitive, settingsStore.settings.requireBiometricForSensitivePaste else {
             popoverController?.hide()
-            pasteSimulator.paste(item, asPlainText: settingsStore.settings.pasteAsPlainTextDefault)
+            Task { [weak self] in
+                guard let self else { return }
+                await pasteSimulator.paste(item, asPlainText: settingsStore.settings.pasteAsPlainTextDefault, targetApp: targetApp)
+            }
             return
         }
 
@@ -227,7 +232,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let authorized = await biometricAuthGate.authorize(reason: "paste this item from Macby")
             guard authorized else { return }
             popoverController?.hide()
-            pasteSimulator.paste(item, asPlainText: settingsStore.settings.pasteAsPlainTextDefault)
+            await pasteSimulator.paste(item, asPlainText: settingsStore.settings.pasteAsPlainTextDefault, targetApp: targetApp)
         }
     }
 

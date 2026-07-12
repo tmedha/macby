@@ -46,6 +46,5 @@ public struct OTPSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 320)
     }
 }

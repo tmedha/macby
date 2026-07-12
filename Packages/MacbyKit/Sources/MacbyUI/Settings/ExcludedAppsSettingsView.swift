@@ -38,7 +38,6 @@ public struct ExcludedAppsSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 320)
     }
 
     private func displayName(for bundleID: String) -> String {
