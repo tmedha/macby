@@ -80,27 +80,37 @@ public struct PopoverRootView: View {
     private var nonFileItems: [ClipboardItem] { viewModel.items.filter { !$0.isFile } }
     private var fileItems: [ClipboardItem] { viewModel.items.filter { $0.isFile } }
 
+    private var combinedItems: [ClipboardItem] { nonFileItems + fileItems }
+
     private var list: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 2) {
-                ForEach(Array(nonFileItems.enumerated()), id: \.element.uuid) { index, item in
-                    row(item: item, index: index)
-                }
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(nonFileItems.enumerated()), id: \.element.uuid) { index, item in
+                        row(item: item, index: index)
+                    }
 
-                if !fileItems.isEmpty {
-                    SectionDivider()
-                    Text("Files")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.top, 4)
+                    if !fileItems.isEmpty {
+                        SectionDivider()
+                        Text("Files")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.top, 4)
 
-                    ForEach(Array(fileItems.enumerated()), id: \.element.uuid) { offset, item in
-                        row(item: item, index: nonFileItems.count + offset)
+                        ForEach(Array(fileItems.enumerated()), id: \.element.uuid) { offset, item in
+                            row(item: item, index: nonFileItems.count + offset)
+                        }
                     }
                 }
+                .padding(6)
             }
-            .padding(6)
+            .onChange(of: selectedIndex) { _, newValue in
+                guard combinedItems.indices.contains(newValue) else { return }
+                withAnimation(.easeOut(duration: 0.12)) {
+                    proxy.scrollTo(combinedItems[newValue].uuid, anchor: nil)
+                }
+            }
         }
     }
 
