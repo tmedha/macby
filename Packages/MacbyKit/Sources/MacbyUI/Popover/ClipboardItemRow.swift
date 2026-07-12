@@ -33,6 +33,10 @@ struct ClipboardItemRow: View {
                 sensitiveBadge
             }
 
+            if item.isFile {
+                fileBadge
+            }
+
             if item.isPinned {
                 Image(systemName: "pin.fill")
                     .font(.system(size: 10))
@@ -83,6 +87,18 @@ struct ClipboardItemRow: View {
         .padding(.horizontal, 5)
         .padding(.vertical, 2)
         .background(Capsule().fill(Color.red.opacity(0.15)))
+    }
+
+    private var fileBadge: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "folder.fill")
+            Text((item.fileURLs?.count ?? 0) > 1 ? "Files" : "File")
+        }
+        .font(.system(size: 9, weight: .medium))
+        .foregroundStyle(Color.blue)
+        .padding(.horizontal, 5)
+        .padding(.vertical, 2)
+        .background(Capsule().fill(Color.blue.opacity(0.15)))
     }
 
     @ViewBuilder

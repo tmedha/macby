@@ -83,42 +83,20 @@ public struct PopoverRootView: View {
         .onKeyPress(.escape) { onClose(); return .handled }
     }
 
-    // Non-file items (text/image/rtf/url) render first, reverse-chronological;
-    // file items render below a visually heavier divider. Both groups share one
-    // selection index space (nonFileItems, then fileItems) so arrow-key
-    // navigation flows continuously from one section into the other.
-    private var nonFileItems: [ClipboardItem] { viewModel.items.filter { !$0.isFile } }
-    private var fileItems: [ClipboardItem] { viewModel.items.filter { $0.isFile } }
-
-    private var combinedItems: [ClipboardItem] { nonFileItems + fileItems }
-
     private var list: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(nonFileItems.enumerated()), id: \.element.uuid) { index, item in
+                    ForEach(Array(viewModel.items.enumerated()), id: \.element.uuid) { index, item in
                         row(item: item, index: index)
-                    }
-
-                    if !fileItems.isEmpty {
-                        SectionDivider()
-                        Text("Files")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 10)
-                            .padding(.top, 4)
-
-                        ForEach(Array(fileItems.enumerated()), id: \.element.uuid) { offset, item in
-                            row(item: item, index: nonFileItems.count + offset)
-                        }
                     }
                 }
                 .padding(6)
             }
             .onChange(of: selectedIndex) { _, newValue in
-                guard combinedItems.indices.contains(newValue) else { return }
+                guard viewModel.items.indices.contains(newValue) else { return }
                 withAnimation(.easeOut(duration: 0.12)) {
-                    proxy.scrollTo(combinedItems[newValue].uuid, anchor: nil)
+                    proxy.scrollTo(viewModel.items[newValue].uuid, anchor: nil)
                 }
             }
         }
@@ -140,23 +118,12 @@ public struct PopoverRootView: View {
     }
 
     private func move(_ delta: Int) {
-        let count = nonFileItems.count + fileItems.count
-        guard count > 0 else { return }
-        selectedIndex = max(0, min(count - 1, selectedIndex + delta))
+        guard !viewModel.items.isEmpty else { return }
+        selectedIndex = max(0, min(viewModel.items.count - 1, selectedIndex + delta))
     }
 
     private func selectCurrent() {
-        let combined = nonFileItems + fileItems
-        guard combined.indices.contains(selectedIndex) else { return }
-        onPaste(combined[selectedIndex])
-    }
-}
-
-private struct SectionDivider: View {
-    var body: some View {
-        Rectangle()
-            .fill(Color.primary.opacity(0.25))
-            .frame(height: 1.5)
-            .padding(.vertical, 6)
+        guard viewModel.items.indices.contains(selectedIndex) else { return }
+        onPaste(viewModel.items[selectedIndex])
     }
 }
