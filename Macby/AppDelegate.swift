@@ -226,6 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { [weak self] in
                 guard let self else { return }
                 await pasteSimulator.paste(item, asPlainText: settingsStore.settings.pasteAsPlainTextDefault, targetApp: targetApp)
+                bumpToTopIfEnabled(item)
             }
             return
         }
@@ -238,6 +239,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard authorized else { return }
             popoverController?.hide()
             await pasteSimulator.paste(item, asPlainText: settingsStore.settings.pasteAsPlainTextDefault, targetApp: targetApp)
+            bumpToTopIfEnabled(item)
+        }
+    }
+
+    private func bumpToTopIfEnabled(_ item: ClipboardItem) {
+        guard settingsStore.settings.bumpPastedItemToTop else { return }
+        do {
+            try historyStore.bumpToTop(uuid: item.uuid)
+        } catch {
+            NSLog("AppDelegate: failed to bump pasted item to top: \(error)")
         }
     }
 

@@ -101,6 +101,19 @@ public final class HistoryStore: @unchecked Sendable {
         }
     }
 
+    /// Moves an item to the top of the recency-sorted list by touching its
+    /// `createdAt` to now — used to bring the most recently *pasted* item back
+    /// to the top, independent of when it was originally copied. Gated behind
+    /// `AppSettings.bumpPastedItemToTop` at the call site, not here.
+    public func bumpToTop(uuid: String) throws {
+        try dbQueue.write { db in
+            if var record = try ClipboardItemRecord.filter(Column("uuid") == uuid).fetchOne(db) {
+                record.createdAt = Date()
+                try record.update(db)
+            }
+        }
+    }
+
     public func setPinned(_ pinned: Bool, uuid: String) throws {
         try dbQueue.write { db in
             if var record = try ClipboardItemRecord.filter(Column("uuid") == uuid).fetchOne(db) {

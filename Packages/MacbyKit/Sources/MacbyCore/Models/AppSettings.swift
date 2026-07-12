@@ -17,6 +17,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var sensitiveDetectionEnabled: Bool
     public var aggressiveSSNDetectionEnabled: Bool
     public var requireBiometricForSensitivePaste: Bool
+    public var bumpPastedItemToTop: Bool
 
     public static let `default` = AppSettings(
         maxHistoryItemCount: 500,
@@ -32,7 +33,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         otpClearTimeoutSeconds: 30,
         sensitiveDetectionEnabled: true,
         aggressiveSSNDetectionEnabled: false,
-        requireBiometricForSensitivePaste: true
+        requireBiometricForSensitivePaste: true,
+        bumpPastedItemToTop: true
     )
 
     public init(
@@ -49,7 +51,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         otpClearTimeoutSeconds: Int,
         sensitiveDetectionEnabled: Bool,
         aggressiveSSNDetectionEnabled: Bool,
-        requireBiometricForSensitivePaste: Bool
+        requireBiometricForSensitivePaste: Bool,
+        bumpPastedItemToTop: Bool
     ) {
         self.maxHistoryItemCount = maxHistoryItemCount
         self.launchAtLogin = launchAtLogin
@@ -65,6 +68,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.sensitiveDetectionEnabled = sensitiveDetectionEnabled
         self.aggressiveSSNDetectionEnabled = aggressiveSSNDetectionEnabled
         self.requireBiometricForSensitivePaste = requireBiometricForSensitivePaste
+        self.bumpPastedItemToTop = bumpPastedItemToTop
     }
 
     // Custom Decodable so that adding new fields in the future never breaks
@@ -89,5 +93,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
         sensitiveDetectionEnabled = try container.decodeIfPresent(Bool.self, forKey: .sensitiveDetectionEnabled) ?? defaults.sensitiveDetectionEnabled
         aggressiveSSNDetectionEnabled = try container.decodeIfPresent(Bool.self, forKey: .aggressiveSSNDetectionEnabled) ?? defaults.aggressiveSSNDetectionEnabled
         requireBiometricForSensitivePaste = try container.decodeIfPresent(Bool.self, forKey: .requireBiometricForSensitivePaste) ?? defaults.requireBiometricForSensitivePaste
+        bumpPastedItemToTop = try container.decodeIfPresent(Bool.self, forKey: .bumpPastedItemToTop) ?? defaults.bumpPastedItemToTop
     }
 }

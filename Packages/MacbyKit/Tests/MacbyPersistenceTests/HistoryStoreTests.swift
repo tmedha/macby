@@ -45,6 +45,18 @@ import GRDB
         #expect(remaining.count == 5)
     }
 
+    @Test func bumpToTopMovesItemAheadOfNewerItems() throws {
+        let store = try makeStore()
+        let first = try store.capture(ClipboardItem(contentType: .text, textPreview: "first", contentHash: ContentHasher.hash(text: "first")))
+        _ = try store.capture(ClipboardItem(contentType: .text, textPreview: "second", contentHash: ContentHasher.hash(text: "second")))
+        _ = try store.capture(ClipboardItem(contentType: .text, textPreview: "third", contentHash: ContentHasher.hash(text: "third")))
+
+        try store.bumpToTop(uuid: first.uuid)
+
+        let ordered = try store.search("")
+        #expect(ordered.first?.uuid == first.uuid)
+    }
+
     @Test func pinnedItemsSurvivePruning() throws {
         let store = try makeStore()
         let pinned = try store.capture(ClipboardItem(contentType: .text, textPreview: "keep-me", contentHash: ContentHasher.hash(text: "keep-me")))

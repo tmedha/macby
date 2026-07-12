@@ -15,7 +15,7 @@ public struct GeneralSettingsView: View {
 
     public var body: some View {
         Form {
-            Section("History") {
+            Section {
                 Stepper(
                     "Keep last \(settingsStore.settings.maxHistoryItemCount) items",
                     value: Binding(
@@ -28,6 +28,7 @@ public struct GeneralSettingsView: View {
                     in: 10...20000,
                     step: 50
                 )
+                Toggle("Move pasted item to top of list", isOn: $settingsStore.settings.bumpPastedItemToTop)
                 Button("Clear History…") { showClearConfirmation = true }
                     .confirmationDialog(
                         "Clear clipboard history?",
@@ -42,6 +43,12 @@ public struct GeneralSettingsView: View {
                         }
                         Button("Cancel", role: .cancel) {}
                     }
+            } header: {
+                Text("History")
+            } footer: {
+                Text("When on, pasting an item from Macby brings it back to the top of the list \u{2014} independent of when it was originally copied — so items you reuse often stay easy to find.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Behavior") {
