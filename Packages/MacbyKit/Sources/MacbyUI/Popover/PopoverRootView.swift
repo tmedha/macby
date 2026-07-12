@@ -30,9 +30,7 @@ public struct PopoverRootView: View {
     }
 
     public var body: some View {
-        contentStack
-            .frame(width: 360, height: 420)
-            .popoverGlassBackground()
+        popoverGlassBody
             .onAppear {
                 searchFocused = true
                 permissionsManager.refresh()
@@ -46,6 +44,27 @@ public struct PopoverRootView: View {
                 searchFocused = true
             }
             .onChange(of: viewModel.items) { _, _ in selectedIndex = 0 }
+    }
+
+    /// Real Liquid Glass on macOS 26+, wrapped in `GlassEffectContainer` per
+    /// Apple's documented pattern (a bare `.glassEffect()` call outside a
+    /// container produced visible border artifacts against Macby's custom
+    /// borderless NSPanel). Falls back to the pre-26 frosted-material look on
+    /// older systems, since Macby's deployment target (macOS 14) predates
+    /// Liquid Glass.
+    @ViewBuilder
+    private var popoverGlassBody: some View {
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer {
+                contentStack
+                    .frame(width: 360, height: 420)
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+        } else {
+            contentStack
+                .frame(width: 360, height: 420)
+                .background(.regularMaterial)
+        }
     }
 
     private var contentStack: some View {
@@ -67,7 +86,8 @@ public struct PopoverRootView: View {
             Text("Accessibility access needed for shortcuts & paste")
                 .font(.system(size: 11))
             Spacer()
-            GlassOrPlainButton("Fix\u{2026}", action: onOpenAccessibilitySettings)
+            Button("Fix\u{2026}", action: onOpenAccessibilitySettings)
+                .buttonStyle(.bordered)
                 .font(.system(size: 11))
         }
         .padding(8)
@@ -83,7 +103,7 @@ public struct PopoverRootView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
-        .searchFieldGlassBackground()
+        .background(Capsule().fill(Color.primary.opacity(0.06)))
         .padding(8)
         .onKeyPress(.downArrow) { move(1); return .handled }
         .onKeyPress(.upArrow) { move(-1); return .handled }
@@ -133,51 +153,5 @@ public struct PopoverRootView: View {
     private func selectCurrent() {
         guard viewModel.items.indices.contains(selectedIndex) else { return }
         onPaste(viewModel.items[selectedIndex])
-    }
-}
-
-/// A button that renders with the real Liquid Glass button style on macOS 26+,
-/// falling back to the standard bordered style on older systems — Macby's
-/// deployment target (macOS 14) predates Liquid Glass, so every glass API use
-/// needs an availability fallback rather than assuming it exists.
-struct GlassOrPlainButton: View {
-    let title: String
-    let action: () -> Void
-
-    init(_ title: String, action: @escaping () -> Void) {
-        self.title = title
-        self.action = action
-    }
-
-    var body: some View {
-        if #available(macOS 26.0, *) {
-            Button(title, action: action)
-                .buttonStyle(.glass)
-        } else {
-            Button(title, action: action)
-                .buttonStyle(.bordered)
-        }
-    }
-}
-
-private extension View {
-    /// The popover's outer panel background: real Liquid Glass on macOS 26+,
-    /// the previous frosted-material look on older systems.
-    @ViewBuilder
-    func popoverGlassBackground() -> some View {
-        if #available(macOS 26.0, *) {
-            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        } else {
-            self.background(.regularMaterial)
-        }
-    }
-
-    @ViewBuilder
-    func searchFieldGlassBackground() -> some View {
-        if #available(macOS 26.0, *) {
-            self.glassEffect(.regular.interactive(), in: Capsule())
-        } else {
-            self.background(Capsule().fill(Color.primary.opacity(0.06)))
-        }
     }
 }

@@ -102,22 +102,30 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
         if let panel { return panel }
 
         let hosting = NSHostingView(rootView: contentView())
+        // .titled was previously included alongside .borderless (whose raw
+        // value is 0, so it contributed nothing to the OptionSet) — .titled
+        // alone made AppKit draw its own native title-bar-region corner
+        // rounding, independent of and misaligned with the SwiftUI content's
+        // own glassEffect RoundedRectangle shape, producing a visible
+        // double/mismatched border. A plain [.nonactivatingPanel, .borderless]
+        // panel draws no window chrome of its own, so the SwiftUI shape is the
+        // only rounded-corner source. NSPanel (unlike plain NSWindow) already
+        // defaults canBecomeKeyWindow to true, so this doesn't affect the
+        // search field's ability to receive keyboard focus.
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 360, height: 420),
-            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView, .borderless],
+            styleMask: [.nonactivatingPanel, .borderless],
             backing: .buffered,
             defer: false
         )
-        panel.titleVisibility = .hidden
-        panel.titlebarAppearsTransparent = true
         panel.isMovableByWindowBackground = false
         panel.hidesOnDeactivate = false
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isReleasedWhenClosed = false
-        // Required for SwiftUI's glassEffect() to actually composite as glass
-        // (sampling/refracting what's behind the window) rather than sitting
-        // on an opaque backing — harmless on pre-macOS 26 systems where the
+        // Required for SwiftUI's glassEffect() (macOS 26+) to actually
+        // composite as glass — sampling/refracting what's behind the window —
+        // rather than sitting on an opaque backing. Harmless pre-26, where the
         // content view falls back to .regularMaterial instead.
         panel.isOpaque = false
         panel.backgroundColor = .clear

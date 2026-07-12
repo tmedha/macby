@@ -46,10 +46,25 @@ import GRDB
     }
 
     @Test func bumpToTopMovesItemAheadOfNewerItems() throws {
+        // GRDB stores Date at millisecond precision, so explicit, well-spaced
+        // timestamps are used here instead of relying on Date() wall-clock
+        // calls in a tight loop, which can tie within the same millisecond and
+        // make ORDER BY createdAt DESC nondeterministic between "third" and a
+        // same-instant bump.
         let store = try makeStore()
-        let first = try store.capture(ClipboardItem(contentType: .text, textPreview: "first", contentHash: ContentHasher.hash(text: "first")))
-        _ = try store.capture(ClipboardItem(contentType: .text, textPreview: "second", contentHash: ContentHasher.hash(text: "second")))
-        _ = try store.capture(ClipboardItem(contentType: .text, textPreview: "third", contentHash: ContentHasher.hash(text: "third")))
+        // All three captures are stamped safely in the past relative to real
+        // wall-clock time, so bumpToTop's internal Date() call (≈ now) is
+        // guaranteed to land strictly after "third" — not a race against it.
+        let now = Date()
+        let first = try store.capture(ClipboardItem(
+            contentType: .text, createdAt: now.addingTimeInterval(-3), textPreview: "first", contentHash: ContentHasher.hash(text: "first")
+        ))
+        _ = try store.capture(ClipboardItem(
+            contentType: .text, createdAt: now.addingTimeInterval(-2), textPreview: "second", contentHash: ContentHasher.hash(text: "second")
+        ))
+        _ = try store.capture(ClipboardItem(
+            contentType: .text, createdAt: now.addingTimeInterval(-1), textPreview: "third", contentHash: ContentHasher.hash(text: "third")
+        ))
 
         try store.bumpToTop(uuid: first.uuid)
 

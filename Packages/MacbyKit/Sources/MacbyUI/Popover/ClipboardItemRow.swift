@@ -125,22 +125,13 @@ struct ClipboardItemRow: View {
 }
 
 private extension View {
-    /// Real Liquid Glass only for the selected row, on macOS 26+ — not every
-    /// row, which would be both visually noisy (glass-on-glass) and needlessly
-    /// expensive to render for a potentially long list. Older systems keep the
-    /// original flat tinted highlight.
-    @ViewBuilder
+    /// A flat tinted highlight, not a nested `glassEffect()` — the row already
+    /// sits inside the popover's own glass panel, and stacking a second glass
+    /// surface on top of that one (without a shared `GlassEffectContainer` to
+    /// merge them) produced a visible seam/border artifact around the row.
     func selectionBackground(isSelected: Bool) -> some View {
-        if #available(macOS 26.0, *) {
-            if isSelected {
-                self.glassEffect(.regular.tint(.accentColor).interactive(), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            } else {
-                self.clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            }
-        } else {
-            self
-                .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-        }
+        self
+            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 }
