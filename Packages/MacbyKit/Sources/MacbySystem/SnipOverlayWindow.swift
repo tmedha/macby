@@ -1,47 +1,97 @@
 import AppKit
 
-/// A borderless, transparent window spanning the union of every connected
-/// display, used for drag-to-select screen-region capture. AppKit's screen
-/// coordinate space is already shared/global across displays, so a single
-/// unioned window gives seamless drag-across-monitor-boundary selection for
-/// free, avoiding hand-off logic a per-screen window design would need.
-final class SnipOverlayWindow: NSWindow {
-    enum SelectionResult {
-        case selected(rect: CGRect, screen: NSScreen)
-        case cancelled
+public enum SnipSelectionResult {
+    case selected(rect: CGRect, screen: NSScreen)
+    case cancelled
+}
+
+/// Presents one drag-to-select overlay window per connected display and
+/// reports the first selection (or cancel) from any of them.
+///
+/// A single window spanning the union of all screens does NOT work on macOS
+/// when "Displays have separate Spaces" is enabled (the default): the window
+/// server clips a window to a single display's Space, so a unioned overlay
+/// only ever appears on part of a multi-display arrangement. One window per
+/// `NSScreen` sidesteps that entirely — each covers exactly its own display.
+/// The tradeoff (a drag can't cross a monitor boundary) is immaterial here
+/// since a snip is captured from a single display anyway.
+@MainActor
+public final class SnipOverlayController {
+    private var windows: [SnipOverlayWindow] = []
+    private var keyMonitor: Any?
+    private var completion: ((SnipSelectionResult) -> Void)?
+    private var didFinish = false
+
+    public init() {}
+
+    public func begin(screens: [NSScreen], completion: @escaping (SnipSelectionResult) -> Void) {
+        self.completion = completion
+        // An accessory (menu-bar) app isn't active by default; without this the
+        // overlay windows can appear but not reliably receive mouse/key events.
+        NSApp.activate(ignoringOtherApps: true)
+
+        for screen in screens {
+            let window = SnipOverlayWindow(screen: screen) { [weak self] result in
+                self?.finish(result)
+            }
+            windows.append(window)
+            window.begin()
+        }
+
+        // Esc routes to whichever overlay is key; a local monitor guarantees it
+        // cancels regardless of which display's window currently holds focus.
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if event.keyCode == 53 { // Escape
+                self?.finish(.cancelled)
+                return nil
+            }
+            return event
+        }
     }
 
-    private let overlayView: SnipOverlayView
+    private func finish(_ result: SnipSelectionResult) {
+        guard !didFinish else { return }
+        didFinish = true
 
-    init(screens: [NSScreen], completion: @escaping (SelectionResult) -> Void) {
-        let unionFrame = screens.reduce(CGRect.null) { $0.union($1.frame) }
-        let view = SnipOverlayView(frame: NSRect(origin: .zero, size: unionFrame.size))
+        if let keyMonitor {
+            NSEvent.removeMonitor(keyMonitor)
+        }
+        keyMonitor = nil
+
+        for window in windows { window.orderOut(nil) }
+        windows.removeAll()
+
+        let completion = self.completion
+        self.completion = nil
+        completion?(result)
+    }
+}
+
+/// A borderless, transparent overlay covering exactly one display, used for
+/// drag-to-select screen-region capture.
+final class SnipOverlayWindow: NSWindow {
+    private let overlayView: SnipOverlayView
+    private let screenFrame: CGRect
+
+    init(screen: NSScreen, completion: @escaping (SnipSelectionResult) -> Void) {
+        screenFrame = screen.frame
+        let view = SnipOverlayView(frame: NSRect(origin: .zero, size: screen.frame.size))
         overlayView = view
 
-        super.init(contentRect: unionFrame, styleMask: [.borderless], backing: .buffered, defer: false)
+        super.init(contentRect: screen.frame, styleMask: [.borderless], backing: .buffered, defer: false)
 
         isOpaque = false
         backgroundColor = .clear
         hasShadow = false
         ignoresMouseEvents = false
-        // .screenSaver is high enough to sit above normal app windows; whether
-        // it renders over another app's full-screen Space is unconfirmed and
-        // documented as a known possible limitation rather than assumed.
         level = .screenSaver
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         isReleasedWhenClosed = false
         contentView = view
 
-        view.onSelectionComplete = { rect in
-            let globalRect = rect.offsetBy(dx: unionFrame.origin.x, dy: unionFrame.origin.y)
-            let screen = screens.first {
-                $0.frame.contains(CGPoint(x: globalRect.midX, y: globalRect.midY))
-            } ?? screens.first
-            if let screen {
-                completion(.selected(rect: globalRect, screen: screen))
-            } else {
-                completion(.cancelled)
-            }
+        view.onSelectionComplete = { [screenFrame] rect in
+            let globalRect = rect.offsetBy(dx: screenFrame.origin.x, dy: screenFrame.origin.y)
+            completion(.selected(rect: globalRect, screen: screen))
         }
         view.onCancel = {
             completion(.cancelled)

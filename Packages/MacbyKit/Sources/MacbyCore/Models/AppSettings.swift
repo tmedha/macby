@@ -18,6 +18,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var aggressiveSSNDetectionEnabled: Bool
     public var requireBiometricForSensitivePaste: Bool
     public var bumpPastedItemToTop: Bool
+    public var ingestSystemScreenshots: Bool
 
     public static let `default` = AppSettings(
         maxHistoryItemCount: 500,
@@ -34,7 +35,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         sensitiveDetectionEnabled: true,
         aggressiveSSNDetectionEnabled: false,
         requireBiometricForSensitivePaste: true,
-        bumpPastedItemToTop: true
+        bumpPastedItemToTop: true,
+        ingestSystemScreenshots: true
     )
 
     public init(
@@ -52,7 +54,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         sensitiveDetectionEnabled: Bool,
         aggressiveSSNDetectionEnabled: Bool,
         requireBiometricForSensitivePaste: Bool,
-        bumpPastedItemToTop: Bool
+        bumpPastedItemToTop: Bool,
+        ingestSystemScreenshots: Bool
     ) {
         self.maxHistoryItemCount = maxHistoryItemCount
         self.launchAtLogin = launchAtLogin
@@ -69,6 +72,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.aggressiveSSNDetectionEnabled = aggressiveSSNDetectionEnabled
         self.requireBiometricForSensitivePaste = requireBiometricForSensitivePaste
         self.bumpPastedItemToTop = bumpPastedItemToTop
+        self.ingestSystemScreenshots = ingestSystemScreenshots
     }
 
     // Custom Decodable so that adding new fields in the future never breaks
@@ -94,5 +98,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
         aggressiveSSNDetectionEnabled = try container.decodeIfPresent(Bool.self, forKey: .aggressiveSSNDetectionEnabled) ?? defaults.aggressiveSSNDetectionEnabled
         requireBiometricForSensitivePaste = try container.decodeIfPresent(Bool.self, forKey: .requireBiometricForSensitivePaste) ?? defaults.requireBiometricForSensitivePaste
         bumpPastedItemToTop = try container.decodeIfPresent(Bool.self, forKey: .bumpPastedItemToTop) ?? defaults.bumpPastedItemToTop
+        ingestSystemScreenshots = try container.decodeIfPresent(Bool.self, forKey: .ingestSystemScreenshots) ?? defaults.ingestSystemScreenshots
     }
 }

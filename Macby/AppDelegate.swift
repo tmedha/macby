@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var snipCaptureService: SnipCaptureService!
     private var otpAutoClearService: OTPAutoClearService!
     private var biometricAuthGate: BiometricAuthGate!
+    private var screenshotWatcher: ScreenshotWatcher!
     private var popoverHotkeyToken: HotkeyManager.Token?
     private var snipHotkeyToken: HotkeyManager.Token?
 
@@ -61,6 +62,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         otpAutoClearService = OTPAutoClearService(historyStore: historyStore, hotkeyManager: hotkeyManager)
         pasteboardMonitor.onCapture = { [weak self] item in
             self?.otpAutoClearService.handleCapturedItem(item)
+        }
+        screenshotWatcher = ScreenshotWatcher()
+        screenshotWatcher.onScreenshot = { [weak self] url in
+            self?.ingestScreenshot(at: url)
         }
         biometricAuthGate = BiometricAuthGate()
 
@@ -99,6 +104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         pasteboardMonitor.stop()
         hotkeyManager.stop()
+        screenshotWatcher.stop()
     }
 
     @objc private func applicationDidBecomeActive() {
@@ -267,6 +273,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             trigger: settings.otpClearTrigger,
             timeoutSeconds: settings.otpClearTimeoutSeconds
         )
+
+        if settings.ingestSystemScreenshots {
+            if !screenshotWatcher.isRunning { screenshotWatcher.start() }
+        } else {
+            screenshotWatcher.stop()
+        }
+    }
+
+    /// Loads a screenshot the system tool just wrote to disk and places it on
+    /// the pasteboard; the running PasteboardMonitor then captures it into
+    /// history exactly like any copied image (deduped by content hash), so no
+    /// separate capture path is needed.
+    private func ingestScreenshot(at url: URL) {
+        guard let image = NSImage(contentsOf: url),
+              let tiff = image.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff),
+              let pngData = rep.representation(using: .png, properties: [:]) else {
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setData(pngData, forType: .png)
     }
 
     private func applyHotkeys(_ settings: AppSettings) {

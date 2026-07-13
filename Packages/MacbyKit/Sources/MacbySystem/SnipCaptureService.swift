@@ -16,7 +16,7 @@ public final class SnipCaptureService {
     private let blobStore: BlobStore
     private let fileSaveRouter: FileSaveRouter
     private let permissionsManager: PermissionsManager
-    private var overlayWindow: SnipOverlayWindow?
+    private var overlayController: SnipOverlayController?
 
     public init(
         historyStore: HistoryStore,
@@ -32,7 +32,7 @@ public final class SnipCaptureService {
 
     /// No-op if an overlay is already showing (e.g. hotkey held/repeated).
     public func startCapture() {
-        guard overlayWindow == nil else { return }
+        guard overlayController == nil else { return }
 
         guard permissionsManager.isScreenRecordingTrusted || permissionsManager.requestScreenRecordingIfNeeded() else {
             presentScreenRecordingDeniedAlert()
@@ -42,16 +42,15 @@ public final class SnipCaptureService {
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
 
-        let window = SnipOverlayWindow(screens: screens) { [weak self] result in
+        let controller = SnipOverlayController()
+        overlayController = controller
+        controller.begin(screens: screens) { [weak self] result in
             self?.handleSelection(result)
         }
-        overlayWindow = window
-        window.begin()
     }
 
-    private func handleSelection(_ result: SnipOverlayWindow.SelectionResult) {
-        overlayWindow?.orderOut(nil)
-        overlayWindow = nil
+    private func handleSelection(_ result: SnipSelectionResult) {
+        overlayController = nil
 
         guard case let .selected(rect, screen) = result else { return }
 

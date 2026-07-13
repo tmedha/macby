@@ -62,6 +62,14 @@ public struct GeneralSettingsView: View {
                 Toggle("Pause clipboard monitoring", isOn: $settingsStore.settings.monitoringPaused)
                 Toggle("Paste as plain text by default", isOn: $settingsStore.settings.pasteAsPlainTextDefault)
             }
+
+            Section {
+                Toggle("Add system screenshots to clipboard", isOn: $settingsStore.settings.ingestSystemScreenshots)
+            } footer: {
+                Text("Watches your macOS screenshot save location (Desktop by default) and adds new screenshots \u{2014} taken with \u{2318}\u{21E7}3, \u{2318}\u{21E7}4, etc. \u{2014} to the clipboard automatically. macOS may ask to grant Macby access to that folder the first time.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }
