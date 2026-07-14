@@ -46,6 +46,18 @@ public final class PasteboardMonitor {
         timer = nil
     }
 
+    /// Marks the pasteboard's current contents as already-seen, so the next
+    /// poll won't treat them as a new copy to capture. Used when Macby itself
+    /// writes to the pasteboard during a paste — otherwise the monitor would
+    /// re-ingest that write and the dedupe path in `HistoryStore.capture` would
+    /// bump the item's `createdAt` to now, moving it to the top of history even
+    /// when the user has "move pasted item to top" turned off. Must be called
+    /// synchronously right after the write (both are on the main actor, so the
+    /// timer can't tick in between).
+    public func ignoreCurrentPasteboardState() {
+        lastChangeCount = pasteboard.changeCount
+    }
+
     private func tick() {
         let currentCount = pasteboard.changeCount
         guard currentCount != lastChangeCount else { return }

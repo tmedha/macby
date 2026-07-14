@@ -29,7 +29,7 @@ Then launch it. Either `open /Applications/Macby.app` or double-click it in Find
 
 ## First launch
 
-1. Click the menu bar icon to open the popover, or press ⌘⇧V (the default shortcut).
+1. Click the menu bar icon to open the popover the first time you launch the app.
 2. The popover will show a banner asking for Accessibility access, needed for keyboard shortcuts and pasting. Click **Fix…**, or grant it yourself under System Settings → Privacy & Security → Accessibility, then reopen the popover.
 3. If you use the snip-capture shortcut (screen region → clipboard), macOS will separately prompt for Screen Recording access the first time you trigger it.
 4. Open Macby's Settings (right-click the menu bar icon) to set your preferred shortcuts, enable Launch at Login, and configure a save folder for snips.

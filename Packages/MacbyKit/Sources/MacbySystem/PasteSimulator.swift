@@ -11,6 +11,12 @@ import MacbyPersistence
 public final class PasteSimulator {
     private let blobStore: BlobStore
 
+    /// Fired synchronously right after Macby writes an item to the pasteboard
+    /// for a paste. `PasteboardMonitor` uses this to ignore that write so the
+    /// pasted item isn't re-ingested (which would bump it to the top of history
+    /// regardless of the "move pasted item to top" setting).
+    public var onDidWriteToPasteboard: (() -> Void)?
+
     public init(blobStore: BlobStore) {
         self.blobStore = blobStore
     }
@@ -22,6 +28,9 @@ public final class PasteSimulator {
     /// is asynchronous, so this briefly waits for it to actually take effect.
     public func paste(_ item: ClipboardItem, asPlainText: Bool = false, targetApp: NSRunningApplication?) async {
         write(item, asPlainText: asPlainText)
+        // Synchronous, before any await below — guarantees the monitor's poll
+        // can't tick between the write and this acknowledgment.
+        onDidWriteToPasteboard?()
 
         if let targetApp, !targetApp.isActive {
             targetApp.activate()

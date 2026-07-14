@@ -46,6 +46,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         historyStore = HistoryStore(dbQueue: dbQueue, maxHistoryItemCount: settingsStore.settings.maxHistoryItemCount)
         pasteboardMonitor = PasteboardMonitor(historyStore: historyStore, blobStore: blobStore)
         pasteSimulator = PasteSimulator(blobStore: blobStore)
+        // When Macby writes to the pasteboard for a paste, tell the monitor to
+        // ignore that write so the pasted item isn't re-ingested and bumped to
+        // the top of history (that must be controlled solely by the "move
+        // pasted item to top" setting, applied via bumpToTopIfEnabled).
+        pasteSimulator.onDidWriteToPasteboard = { [weak self] in
+            self?.pasteboardMonitor.ignoreCurrentPasteboardState()
+        }
         permissionsManager = PermissionsManager()
         popoverPresentationState = PopoverPresentationState()
         historyViewModel = HistoryViewModel(historyStore: historyStore, dbQueue: dbQueue)
