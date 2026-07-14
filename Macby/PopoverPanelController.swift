@@ -109,10 +109,13 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
         // own glassEffect RoundedRectangle shape, producing a visible
         // double/mismatched border. A plain [.nonactivatingPanel, .borderless]
         // panel draws no window chrome of its own, so the SwiftUI shape is the
-        // only rounded-corner source. NSPanel (unlike plain NSWindow) already
-        // defaults canBecomeKeyWindow to true, so this doesn't affect the
-        // search field's ability to receive keyboard focus.
-        let panel = NSPanel(
+        // only rounded-corner source.
+        //
+        // But a borderless window defaults canBecomeKey to false (only windows
+        // with a title bar or resize bar are keyable), which left the search
+        // field unable to receive keyboard focus. KeyablePanel overrides that
+        // so arrow-key navigation and Enter-to-paste work without a mouse click.
+        let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 360, height: 420),
             styleMask: [.nonactivatingPanel, .borderless],
             backing: .buffered,
@@ -120,6 +123,13 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
         )
         panel.isMovableByWindowBackground = false
         panel.hidesOnDeactivate = false
+        // A borderless transparent window still gets a drop shadow by default
+        // (hasShadow defaults to true); against the clear background it reads as
+        // a dark halo hugging the rounded-glass shape — the "boundary" around
+        // the popover. It's purely cosmetic and unrelated to keyboard focus
+        // (that comes from KeyablePanel.canBecomeKey), so turning it off removes
+        // the boundary while leaving the glass rim as the panel's only edge.
+        panel.hasShadow = false
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isReleasedWhenClosed = false
@@ -149,4 +159,12 @@ final class PopoverPanelController: NSObject, NSWindowDelegate {
         }
         outsideClickMonitor = nil
     }
+}
+
+/// A borderless panel that can still become the key window, so its hosted
+/// SwiftUI search field can receive keyboard focus (borderless windows default
+/// canBecomeKey to false).
+private final class KeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
 }
