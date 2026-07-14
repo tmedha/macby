@@ -1,7 +1,8 @@
 # macby
 The only clipboard you need for your MacBook.
 
-There's no downloadable build — you build it yourself and run the result. This is intentional: Macby needs Accessibility (and, for snip capture, Screen Recording) permission to work, and macOS ties those grants to the exact code signature of the binary. A pre-built release you download and periodically update would mean re-granting permissions after every update; building it yourself once means you only deal with that once.
+You can use the Makefile to build a .dmg for yourself, or you can go to [macby-download](tmedha.com/macby-download) and download
+the installer for MacOS from there.
 
 ## Requirements
 
@@ -13,14 +14,13 @@ There's no downloadable build — you build it yourself and run the result. This
 ```sh
 git clone https://github.com/tmedha/macby.git
 cd macby
-xcodegen generate
-xcodebuild -project Macby.xcodeproj -scheme Macby -configuration Release build
+make build
 ```
 
-This produces `Macby.app` under `~/Library/Developer/Xcode/DerivedData/Macby-*/Build/Products/Release/`. Move it into `/Applications`:
+This produces `Macby.app` under `build/Release/`. Move it into `/Applications`:
 
 ```sh
-cp -R "$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -iname 'Macby-*' -print -quit)/Build/Products/Release/Macby.app" /Applications/
+cp -R build/Release/Macby.app /Applications/
 ```
 
 Then launch it. Either `open /Applications/Macby.app` or double-click it in Finder. It runs as a menu bar app (look for the clipboard icon), with no Dock icon or window.
