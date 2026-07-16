@@ -133,8 +133,23 @@ public struct PopoverRootView: View {
         .padding(.vertical, 7)
         .background(Capsule().fill(Color.primary.opacity(0.06)))
         .padding(8)
-        .onKeyPress(.downArrow) { move(1); return .handled }
-        .onKeyPress(.upArrow) { move(-1); return .handled }
+        // Arrows step the selection; Cmd+arrow jumps to the top/bottom of the
+        // list. Handled together (via the multi-key overload) so the Command
+        // modifier can be inspected — the bare .onKeyPress(.upArrow) overload
+        // gives no access to modifiers.
+        .onKeyPress(keys: [.upArrow, .downArrow]) { press in
+            let jump = press.modifiers.contains(.command)
+            if press.key == .upArrow {
+                if jump { moveToTop() } else { move(-1) }
+            } else {
+                if jump { moveToBottom() } else { move(1) }
+            }
+            return .handled
+        }
+        // Home/End do the same top/bottom jump for external keyboards that have
+        // those keys (MacBook keyboards don't, hence the Cmd+arrow above).
+        .onKeyPress(.home) { moveToTop(); return .handled }
+        .onKeyPress(.end) { moveToBottom(); return .handled }
         .onKeyPress(.return) { selectCurrent(); return .handled }
         .onKeyPress(.escape) { onClose(); return .handled }
     }
@@ -186,6 +201,16 @@ public struct PopoverRootView: View {
     private func move(_ delta: Int) {
         guard !viewModel.items.isEmpty else { return }
         selectedIndex = max(0, min(viewModel.items.count - 1, selectedIndex + delta))
+    }
+
+    private func moveToTop() {
+        guard !viewModel.items.isEmpty else { return }
+        selectedIndex = 0
+    }
+
+    private func moveToBottom() {
+        guard !viewModel.items.isEmpty else { return }
+        selectedIndex = viewModel.items.count - 1
     }
 
     private func selectCurrent() {
