@@ -15,17 +15,11 @@ public struct SettingsRootView: View {
 
     public var body: some View {
         TabView {
-            GeneralSettingsView(settingsStore: settingsStore, historyStore: historyStore)
+            GeneralSettingsView(settingsStore: settingsStore, historyStore: historyStore, bookmarkStore: bookmarkStore)
                 .tabItem { Label("General", systemImage: "gearshape") }
 
             ShortcutsSettingsView(settingsStore: settingsStore)
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
-
-            FolderRoutingSettingsView(bookmarkStore: bookmarkStore)
-                .tabItem { Label("Folders", systemImage: "folder") }
-
-            OTPSettingsView(settingsStore: settingsStore)
-                .tabItem { Label("OTP", systemImage: "key") }
 
             PrivacySettingsView(settingsStore: settingsStore)
                 .tabItem { Label("Privacy", systemImage: "lock.shield") }

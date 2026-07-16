@@ -2,6 +2,8 @@ import SwiftUI
 import MacbyCore
 import MacbyPersistence
 
+/// Renders the OTP-related sections. Embedded inside the merged Privacy tab's
+/// single `Form`, so it deliberately does *not* wrap its own `Form`.
 public struct OTPSettingsView: View {
     @ObservedObject var settingsStore: SettingsStore
 
@@ -10,9 +12,11 @@ public struct OTPSettingsView: View {
     }
 
     public var body: some View {
-        Form {
+        Group {
             Section {
                 Toggle("Detect one-time passcodes", isOn: $settingsStore.settings.otpDetectionEnabled)
+            } header: {
+                Text("One-Time Passcodes")
             } footer: {
                 Text("Copied text that looks like a 4\u{2013}8 digit passcode is flagged and can be auto-cleared from the clipboard after use.")
                     .font(.caption)
@@ -45,6 +49,5 @@ public struct OTPSettingsView: View {
                 }
             }
         }
-        .formStyle(.grouped)
     }
 }

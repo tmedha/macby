@@ -12,6 +12,8 @@ public struct PrivacySettingsView: View {
         Form {
             Section {
                 Toggle("Detect sensitive data (credit cards, SSNs)", isOn: $settingsStore.settings.sensitiveDetectionEnabled)
+            } header: {
+                Text("Sensitive Data")
             } footer: {
                 Text("Flagged items are unaffected in Macby's own history list, but pasting one from Macby requires Touch ID below.")
                     .font(.caption)
@@ -35,6 +37,11 @@ public struct PrivacySettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            // OTP detection/auto-clear lives here rather than in its own tab;
+            // OTPSettingsView renders bare sections (no Form) so it composes
+            // into this one.
+            OTPSettingsView(settingsStore: settingsStore)
         }
         .formStyle(.grouped)
     }
