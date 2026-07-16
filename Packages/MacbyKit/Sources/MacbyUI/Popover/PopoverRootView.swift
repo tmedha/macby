@@ -11,6 +11,7 @@ public struct PopoverRootView: View {
     let onOpenAccessibilitySettings: () -> Void
 
     @State private var selectedIndex = 0
+    @State private var showingClearConfirmation = false
     @FocusState private var searchFocused: Bool
 
     public init(
@@ -84,13 +85,23 @@ public struct PopoverRootView: View {
     private var footer: some View {
         HStack {
             Spacer()
-            Button(role: .destructive, action: viewModel.clearHistory) {
+            Button(role: .destructive) { showingClearConfirmation = true } label: {
                 Label("Clear History", systemImage: "trash")
                     .font(.system(size: 11))
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
             .disabled(viewModel.items.allSatisfy(\.isPinned))
+            .confirmationDialog(
+                "Clear clipboard history?",
+                isPresented: $showingClearConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Clear History", role: .destructive, action: viewModel.clearHistory)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This removes all unpinned items and can't be undone. Pinned items are kept.")
+            }
             Spacer()
         }
         .padding(.vertical, 6)
