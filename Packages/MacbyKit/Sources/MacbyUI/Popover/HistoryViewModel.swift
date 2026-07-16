@@ -46,4 +46,13 @@ public final class HistoryViewModel: ObservableObject {
     public func delete(_ item: ClipboardItem) {
         try? historyStore.delete(uuid: item.uuid)
     }
+
+    /// Clears clipboard history, keeping pinned items. The live observation
+    /// refreshes `items` on the resulting DB change, but only while no search is
+    /// active (its onChange is gated on an empty `searchText`), so update `items`
+    /// here too to keep a filtered list in sync after clearing.
+    public func clearHistory() {
+        try? historyStore.clearHistory()
+        items = items.filter(\.isPinned)
+    }
 }

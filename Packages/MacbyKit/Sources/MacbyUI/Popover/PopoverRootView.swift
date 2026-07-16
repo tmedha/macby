@@ -76,7 +76,24 @@ public struct PopoverRootView: View {
             searchField
             Divider()
             list
+            Divider()
+            footer
         }
+    }
+
+    private var footer: some View {
+        HStack {
+            Spacer()
+            Button(role: .destructive, action: viewModel.clearHistory) {
+                Label("Clear History", systemImage: "trash")
+                    .font(.system(size: 11))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .disabled(viewModel.items.allSatisfy(\.isPinned))
+            Spacer()
+        }
+        .padding(.vertical, 6)
     }
 
     private var permissionBanner: some View {
