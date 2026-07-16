@@ -26,8 +26,6 @@ struct ClipboardItemRecord: Codable, FetchableRecord, MutablePersistableRecord {
     var isPinned: Bool
     var isSensitive: Bool
     var sensitivityKind: String?
-    var otpAutoClearAt: Date?
-    var otpCleared: Bool
 
     var savedToFolderPath: String?
     var savedFolderCategory: String?
@@ -55,8 +53,6 @@ struct ClipboardItemRecord: Codable, FetchableRecord, MutablePersistableRecord {
         isPinned = item.isPinned
         isSensitive = item.isSensitive
         sensitivityKind = item.sensitivityKind?.rawValue
-        otpAutoClearAt = item.otpAutoClearAt
-        otpCleared = item.otpCleared
         savedToFolderPath = item.savedToFolderPath
         savedFolderCategory = item.savedFolderCategory
     }
@@ -80,8 +76,6 @@ struct ClipboardItemRecord: Codable, FetchableRecord, MutablePersistableRecord {
             isPinned: isPinned,
             isSensitive: isSensitive,
             sensitivityKind: sensitivityKind.flatMap { SensitivityKind(rawValue: $0) },
-            otpAutoClearAt: otpAutoClearAt,
-            otpCleared: otpCleared,
             savedToFolderPath: savedToFolderPath,
             savedFolderCategory: savedFolderCategory
         )

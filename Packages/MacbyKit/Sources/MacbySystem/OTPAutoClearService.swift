@@ -97,11 +97,19 @@ public final class OTPAutoClearService {
     }
 
     private func clearIfCurrentPasteboardIsActiveOTP() {
-        guard let item = try? historyStore.mostRecentUnclearedOTPItem() else { return }
+        // Only ever act while the feature is on. The clear paths are already
+        // gated on `enabled` upstream (paste observation is unregistered and
+        // pending timeouts are cancelled on disable), but guard here too so the
+        // destructive delete below can never fire for a disabled feature.
+        guard enabled else { return }
+        guard let item = try? historyStore.mostRecentClearableOTPItem() else { return }
         guard NSPasteboard.general.string(forType: .string) == item.textPreview else { return }
 
         NSPasteboard.general.clearContents()
-        try? historyStore.markOTPCleared(uuid: item.uuid)
+        // Delete the row outright rather than just flagging it cleared: leaving
+        // the OTP in Macby's own history (in plaintext, and still pasteable from
+        // the popover) would defeat the point of auto-clearing it.
+        try? historyStore.delete(uuid: item.uuid)
         pendingTimeoutTasks[item.uuid]?.cancel()
         pendingTimeoutTasks.removeValue(forKey: item.uuid)
     }

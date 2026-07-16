@@ -22,8 +22,6 @@ public struct ClipboardItem: Codable, Identifiable, Equatable, Sendable {
     public var isPinned: Bool
     public var isSensitive: Bool
     public var sensitivityKind: SensitivityKind?
-    public var otpAutoClearAt: Date?
-    public var otpCleared: Bool
 
     public var savedToFolderPath: String?
     public var savedFolderCategory: String?
@@ -44,8 +42,6 @@ public struct ClipboardItem: Codable, Identifiable, Equatable, Sendable {
         isPinned: Bool = false,
         isSensitive: Bool = false,
         sensitivityKind: SensitivityKind? = nil,
-        otpAutoClearAt: Date? = nil,
-        otpCleared: Bool = false,
         savedToFolderPath: String? = nil,
         savedFolderCategory: String? = nil
     ) {
@@ -64,8 +60,6 @@ public struct ClipboardItem: Codable, Identifiable, Equatable, Sendable {
         self.isPinned = isPinned
         self.isSensitive = isSensitive
         self.sensitivityKind = sensitivityKind
-        self.otpAutoClearAt = otpAutoClearAt
-        self.otpCleared = otpCleared
         self.savedToFolderPath = savedToFolderPath
         self.savedFolderCategory = savedFolderCategory
     }

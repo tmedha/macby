@@ -64,16 +64,14 @@ struct ClipboardItemRow: View {
 
     private var otpBadge: some View {
         HStack(spacing: 3) {
-            Image(systemName: item.otpCleared ? "checkmark.circle" : "key.fill")
-            Text(item.otpCleared ? "Cleared" : "OTP")
+            Image(systemName: "key.fill")
+            Text("OTP")
         }
         .font(.system(size: 9, weight: .medium))
-        .foregroundStyle(item.otpCleared ? Color.secondary : Color.orange)
+        .foregroundStyle(Color.orange)
         .padding(.horizontal, 5)
         .padding(.vertical, 2)
-        .background(
-            Capsule().fill((item.otpCleared ? Color.gray : Color.orange).opacity(0.15))
-        )
+        .background(Capsule().fill(Color.orange.opacity(0.15)))
     }
 
     private var sensitiveBadge: some View {
