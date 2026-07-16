@@ -155,6 +155,16 @@ public struct PopoverRootView: View {
                     proxy.scrollTo(viewModel.items[newValue].uuid, anchor: nil)
                 }
             }
+            // The panel/hosting view is reused across opens (see
+            // PopoverPanelController), so the ScrollView otherwise keeps its
+            // last scroll offset. Reset selection and scroll back to the top on
+            // every open so a new open always starts at the most recent item.
+            .onChange(of: presentationState.showCount) { _, _ in
+                selectedIndex = 0
+                if let first = viewModel.items.first {
+                    proxy.scrollTo(first.uuid, anchor: .top)
+                }
+            }
         }
     }
 
