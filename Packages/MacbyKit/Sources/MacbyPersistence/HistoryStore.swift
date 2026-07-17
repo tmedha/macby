@@ -38,7 +38,7 @@ public final class HistoryStore: @unchecked Sendable {
     public func observeRecentItems(limit: Int = 200) -> ValueObservation<ValueReducers.Fetch<[ClipboardItem]>> {
         ValueObservation.tracking { db in
             try ClipboardItemRecord
-                .order(Column("createdAt").desc)
+                .order(Column("isPinned").desc, Column("createdAt").desc)
                 .limit(limit)
                 .fetchAll(db)
                 .map { $0.asDomainItem() }
@@ -49,7 +49,7 @@ public final class HistoryStore: @unchecked Sendable {
         guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return try dbQueue.read { db in
                 try ClipboardItemRecord
-                    .order(Column("createdAt").desc)
+                    .order(Column("isPinned").desc, Column("createdAt").desc)
                     .limit(limit)
                     .fetchAll(db)
                     .map { $0.asDomainItem() }
@@ -63,7 +63,7 @@ public final class HistoryStore: @unchecked Sendable {
                 SELECT clipboardItem.* FROM clipboardItem
                 JOIN clipboardItem_fts ON clipboardItem_fts.rowid = clipboardItem.id
                 WHERE clipboardItem_fts MATCH ?
-                ORDER BY clipboardItem.createdAt DESC
+                ORDER BY clipboardItem.isPinned DESC, clipboardItem.createdAt DESC
                 LIMIT ?
                 """,
                 arguments: [pattern, limit]

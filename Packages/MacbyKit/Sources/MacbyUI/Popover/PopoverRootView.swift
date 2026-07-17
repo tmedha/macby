@@ -150,6 +150,20 @@ public struct PopoverRootView: View {
         // those keys (MacBook keyboards don't, hence the Cmd+arrow above).
         .onKeyPress(.home) { moveToTop(); return .handled }
         .onKeyPress(.end) { moveToBottom(); return .handled }
+        // Cmd+Delete deletes and Cmd+P pins/unpins the highlighted item (which
+        // the mouse and keyboard jointly drive). Both gate on the Command
+        // modifier and return .ignored otherwise, so a bare Backspace still
+        // edits the search text and typing "p" still types.
+        .onKeyPress(keys: [.delete]) { press in
+            guard press.modifiers.contains(.command) else { return .ignored }
+            deleteSelected()
+            return .handled
+        }
+        .onKeyPress(keys: ["p"]) { press in
+            guard press.modifiers.contains(.command) else { return .ignored }
+            togglePinSelected()
+            return .handled
+        }
         .onKeyPress(.return) { selectCurrent(); return .handled }
         .onKeyPress(.escape) { onClose(); return .handled }
     }
@@ -192,6 +206,14 @@ public struct PopoverRootView: View {
                 onPaste(item)
             }
         )
+        // Hovering a row makes it the selection, so mouse and keyboard drive a
+        // single highlighted item — the one target for Cmd+P / Cmd+Delete /
+        // Enter. Act only on enter; leaving keeps the selection put. onHover
+        // fires on crossing a row boundary, not while the cursor rests, so a
+        // stationary mouse never fights arrow-key navigation.
+        .onHover { inside in
+            if inside { selectedIndex = index }
+        }
         .contextMenu {
             Button(item.isPinned ? "Unpin" : "Pin") { viewModel.togglePin(item) }
             Button("Delete", role: .destructive) { viewModel.delete(item) }
@@ -216,5 +238,15 @@ public struct PopoverRootView: View {
     private func selectCurrent() {
         guard viewModel.items.indices.contains(selectedIndex) else { return }
         onPaste(viewModel.items[selectedIndex])
+    }
+
+    private func deleteSelected() {
+        guard viewModel.items.indices.contains(selectedIndex) else { return }
+        viewModel.delete(viewModel.items[selectedIndex])
+    }
+
+    private func togglePinSelected() {
+        guard viewModel.items.indices.contains(selectedIndex) else { return }
+        viewModel.togglePin(viewModel.items[selectedIndex])
     }
 }
