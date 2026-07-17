@@ -34,6 +34,19 @@ Then launch it. Either `open /Applications/Macby.app` or double-click it in Find
 3. If you use the snip-capture shortcut (screen region → clipboard), macOS will separately prompt for Screen Recording access the first time you trigger it.
 4. Open Macby's Settings (right-click the menu bar icon) to set your preferred shortcuts, enable Launch at Login, and configure a save folder for snips.
 
+## Keyboard shortcuts
+
+Inside the popover:
+
+- **↑ / ↓** — move the highlight (moving the mouse over a row highlights it too)
+- **⌘↑ / ⌘↓**, or **Home / End** — jump to the top / bottom of the list
+- **Return** — paste the highlighted item
+- **⌘P** — pin / unpin the highlighted item (pinned items sort to the top)
+- **⌘⌫** — delete the highlighted item
+- **Esc** — close the popover
+
+Just start typing to search. The global hotkeys for opening the popover and starting a snip capture are configurable under Settings → Shortcuts.
+
 ## Updating
 
 Pull the latest changes and rebuild with the same commands above. Rebuilding changes the code signature, so macOS will ask you to re-grant Accessibility (and Screen Recording, if applicable) again — that's expected, not a bug.
