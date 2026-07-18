@@ -3,7 +3,7 @@ name: Release DMG
 on:
   push:
     branches: [main]
-    paths: ['project.yml']
+    paths: ['project.yml', 'docs/**']
   workflow_dispatch:
 
 permissions:
@@ -58,3 +58,40 @@ jobs:
             "build/Macby-${{ steps.version.outputs.version }}.dmg" \
             --title "Macby ${{ steps.version.outputs.version }}" \
             --generate-notes
+
+      - name: Bump landing page to the new version
+        if: steps.check.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Point every download link and version label at the new release asset.
+          perl -0777 -pi -e 's{Macby-\d+\.\d+\.\d+\.dmg}{Macby-$ENV{VERSION}.dmg}g' docs/index.html
+          perl -0777 -pi -e 's{v\d+\.\d+\.\d+}{v$ENV{VERSION}}g' docs/index.html
+
+      - name: Commit landing page version bump
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          if ! git diff --quiet -- docs/index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/index.html
+            git commit -m "Bump landing page to v${{ steps.version.outputs.version }} [skip ci]"
+            git push
+          fi
+
+  deploy-docs:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Pick up the tip of main, including any version-bump commit the
+          # release job just pushed.
+          ref: main
+
+      - name: Deploy landing page to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages

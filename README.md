@@ -1,7 +1,7 @@
-# macby
+# Macby
 The only clipboard you need for your MacBook.
 
-You can use the Makefile to build a .dmg for yourself, or you can go to [macby-download](tmedha.com/macby-download) and download
+You can use the Makefile to build a .dmg for yourself, or you can go to the [Macby landing page](https://tmedha.github.io/macby/) and download
 the installer for MacOS from there.
 
 ## Requirements
