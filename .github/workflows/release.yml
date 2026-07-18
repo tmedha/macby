@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -32,9 +32,13 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Select latest Xcode
+      # Macby's popover uses the Liquid Glass APIs (GlassEffectContainer /
+      # .glassEffect), which only exist in the macOS 26 SDK. They're guarded at
+      # runtime with #available(macOS 26, *) so the app still runs on macOS 14+,
+      # but building them requires Xcode 26.
+      - name: Select Xcode 26
         if: steps.check.outputs.exists == 'false'
-        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)"
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)"
 
       - name: Install build tools
         if: steps.check.outputs.exists == 'false'
