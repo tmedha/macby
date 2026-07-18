@@ -5,11 +5,15 @@ BUILD_DIR := build
 APP := $(BUILD_DIR)/Release/Macby.app
 DMG := $(BUILD_DIR)/Macby-$(VERSION).dmg
 
+# Extra flags/settings passed to xcodebuild (used by CI for universal, ad-hoc builds)
+XCODE_FLAGS ?=
+
 generate:
 	xcodegen generate
 
 build: generate
 	xcodebuild -project Macby.xcodeproj -scheme Macby -configuration Release \
+		$(XCODE_FLAGS) \
 		CONFIGURATION_BUILD_DIR="$(CURDIR)/$(BUILD_DIR)/Release" build
 
 # Requires create-dmg: brew install create-dmg
