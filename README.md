@@ -4,6 +4,16 @@ The only clipboard you need for your MacBook.
 You can use the Makefile to build a .dmg for yourself, or you can go to the [Macby landing page](https://tmedha.github.io/macby/) and download
 the installer for MacOS from there.
 
+## Running the download
+
+The DMG from the landing page is ad-hoc signed but not notarized, so macOS quarantines it and will refuse to open it (e.g. "Macby is damaged and can't be opened"). After dragging Macby into `/Applications`, clear the quarantine flag once:
+
+```sh
+sudo xattr -rd com.apple.quarantine /Applications/Macby.app
+```
+
+Then open it normally. Building from source yourself (below) avoids this entirely.
+
 ## Requirements
 
 - Xcode (15 or later)
