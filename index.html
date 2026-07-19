@@ -986,8 +986,9 @@
                 </div>
                 <div class="step">
                     <div class="n">2</div>
-                    <h4>First launch</h4>
-                    <p>Right-click Macby and choose Open the first time. Grant accessibility access so the hotkeys work.</p>
+                    <h4>Remove the quarantine</h4>
+                    <p>Macby is free and open source but not notarized, so macOS quarantines the download. Run this in Terminal once, then open Macby and grant accessibility access so the hotkeys work:</p>
+                    <p><code>sudo xattr -rd com.apple.quarantine /Applications/Macby.app</code></p>
                 </div>
                 <div class="step">
                     <div class="n">3</div>
